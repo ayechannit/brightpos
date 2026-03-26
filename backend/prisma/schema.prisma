@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Product {
+  id            Int            @id @default(autoincrement())
+  name          String
+  barcode       String?        @unique
+  price         Float
+  stock         Int            @default(0)
+  categoryId    Int?
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  SaleItems     SaleItem[]
+  PurchaseItems PurchaseItem[]
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  address   String?
+  sales     Sale[]
+  createdAt DateTime @default(now())
+}
+
+model Supplier {
+  id        Int        @id @default(autoincrement())
+  name      String
+  phone     String?
+  address   String?
+  purchases Purchase[]
+  createdAt DateTime   @default(now())
+}
+
+model Sale {
+  id               Int           @id @default(autoincrement())
+  voucherCode      String?       @unique
+  customerId       Int?
+  totalAmount      Float
+  paidAmount       Float         @default(0)
+  dueAmount        Float         @default(0)
+  nonRefundableFee Float         @default(0)
+  refundableFee    Float         @default(0)
+  isDeleted        Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  items            SaleItem[]
+  transactions     Transaction[]
+  customer         Customer?     @relation(fields: [customerId], references: [id])
+}
+
+model SaleItem {
+  id        Int     @id @default(autoincrement())
+  saleId    Int
+  productId Int
+  quantity  Int
+  price     Float   // Price at the time of sale
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Purchase {
+  id            Int            @id @default(autoincrement())
+  supplierId    Int?
+  supplierName  String?        // For backward compatibility or quick entry
+  totalAmount   Float
+  paidAmount    Float          @default(0)
+  dueAmount     Float          @default(0)
+  isDeleted     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  items         PurchaseItem[]
+  transactions  Transaction[]
+  supplier      Supplier?      @relation(fields: [supplierId], references: [id])
+}
+
+model PurchaseItem {
+  id          Int       @id @default(autoincrement())
+  purchaseId  Int
+  productId   Int
+  quantity    Int
+  costPrice   Float     // Cost at the time of purchase
+  expiryDate  DateTime? // Expiration date for this batch
+  purchase    Purchase  @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id])
+}
+
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  type          String    // "DEBIT" (Cash In/Revenue), "CREDIT" (Cash Out/Expense)
+  category      String    // "SALE", "PURCHASE", "EXPENSE", "PAYMENT_RECEIVED", "PAYMENT_MADE"
+  amount        Float
+  description   String?
+  saleId        Int?
+  purchaseId    Int?
+  expenseId     Int?
+  createdAt     DateTime  @default(now())
+
+  sale          Sale?     @relation(fields: [saleId], references: [id])
+  purchase      Purchase? @relation(fields: [purchaseId], references: [id])
+  expense       Expense?  @relation(fields: [expenseId], references: [id])
+}
+
+model Expense {
+  id            Int           @id @default(autoincrement())
+  description   String
+  amount        Float
+  isDeleted     Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  transactions  Transaction[]
+}
+
+model Setting {
+  id             Int      @id @default(autoincrement())
+  shopName       String   @default("Lin Yaung Thit")
+  shopAddress    String?
+  shopPhone      String?
+  printerWidth   Float    @default(80) // in mm usually, e.g., 58mm or 80mm
+  printerHeight  Float?   // Optional dynamic height, or null if auto
+  updatedAt      DateTime @updatedAt
+}
