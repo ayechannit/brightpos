@@ -1,18 +1,151 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
 
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_linyaungthit';
+
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({ adapter }); 
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Auth Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Access denied. No token provided.' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired token.' });
+    req.user = user;
+    next();
+  });
+};
+
+// --- Roles ---
+app.get('/api/roles', async (req, res) => {
+  try {
+    const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
+    res.json(roles);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch roles' });
+  }
+});
+
+app.post('/api/roles', async (req, res) => {
+  const { name, permissions } = req.body;
+  try {
+    const role = await prisma.role.create({ data: { name, permissions } });
+    res.json(role);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create role' });
+  }
+});
+
+app.put('/api/roles/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, permissions } = req.body;
+  try {
+    const role = await prisma.role.update({
+      where: { id: Number(id) },
+      data: { name, permissions }
+    });
+    res.json(role);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update role' });
+  }
+});
+
+app.delete('/api/roles/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.role.delete({ where: { id: Number(id) } });
+    res.json({ message: 'Role deleted' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete role (it may be in use)' });
+  }
+});
+
+// --- Users ---
+app.post('/api/users/register', async (req, res) => {
+  const { username, password, roleId } = req.body;
+  try {
+    if (!prisma.user) {
+      console.error("prisma.user is undefined! Available models:", Object.keys(prisma).filter(k => !k.startsWith("_") && !k.startsWith("$")));
+      return res.status(500).json({ error: 'Database configuration error: User model not found' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { username, password: hashedPassword, roleId: roleId ? Number(roleId) : null },
+      include: { role: true }
+    });
+    res.json({ id: user.id, username: user.username, role: user.role });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(400).json({ error: 'Username already exists or invalid data', details: error.message });
+  }
+});
+
+app.post('/api/users/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ 
+      where: { username },
+      include: { role: true }
+    });
+    if (user && !user.isDeleted && await bcrypt.compare(password, user.password)) {
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role }, 
+        JWT_SECRET, 
+        { expiresIn: '24h' }
+      );
+      res.json({ id: user.id, username: user.username, role: user.role, token });
+    } else {
+      res.status(401).json({ error: 'Invalid username or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.use('/api', authenticateToken);
+
+// --- Everything else below will be protected by the middleware ---
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({ 
+      where: { isDeleted: false },
+      select: { id: true, username: true, role: true, createdAt: true },
+      orderBy: { createdAt: 'desc' } 
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.user.update({
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
+    res.json({ message: 'User deleted (Soft)' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete user' });
+  }
+});
 
 // --- Categories ---
 app.get('/api/categories', async (req, res) => {

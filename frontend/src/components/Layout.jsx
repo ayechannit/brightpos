@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, IconButton, useTheme, useMediaQuery, Menu, MenuItem, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -19,36 +19,46 @@ import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 const drawerWidth = 260;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'POS', icon: <PointOfSaleIcon />, path: '/pos' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/customers' },
-  { text: 'Suppliers', icon: <LocalShippingIcon />, path: '/suppliers' },
-  { text: 'Sales History', icon: <ReceiptLongIcon />, path: '/sales' },
-  { text: 'Purchases (Restock)', icon: <ShoppingCartIcon />, path: '/purchases' },
-  { text: 'Categories', icon: <LocalOfferIcon />, path: '/categories' },
-  { text: 'Product Catalog', icon: <CategoryIcon />, path: '/products' },
-  { text: 'Inventory Management', icon: <InventoryIcon />, path: '/inventory' },
-  { text: 'Transactions (Debit/Credit)', icon: <PaidIcon />, path: '/transactions' },
-  { text: 'Expenses', icon: <MoneyOffIcon />, path: '/expenses' },
-  { text: 'Financial Report', icon: <AssessmentIcon />, path: '/reports' },
-  { text: 'Product Performance', icon: <LeaderboardIcon />, path: '/performance' },
-  { text: 'Customer/Supplier Report', icon: <AssignmentIndIcon />, path: '/entity-report' },
-  { text: 'Product Ledger', icon: <ListAltIcon />, path: '/product-ledger' },
-  { text: 'AR/AP Aging Report', icon: <AccessTimeIcon />, path: '/aging-report' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/', permission: 'DASHBOARD' },
+  { text: 'POS', icon: <PointOfSaleIcon />, path: '/pos', permission: 'POS' },
+  { text: 'Users', icon: <PersonAddIcon />, path: '/users', permission: 'USERS' },
+  { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', permission: 'ROLES' },
+  { text: 'Customers', icon: <PeopleIcon />, path: '/customers', permission: 'CUSTOMERS' },
+  { text: 'Suppliers', icon: <LocalShippingIcon />, path: '/suppliers', permission: 'SUPPLIERS' },
+  { text: 'Sales History', icon: <ReceiptLongIcon />, path: '/sales', permission: 'SALES' },
+  { text: 'Purchases (Restock)', icon: <ShoppingCartIcon />, path: '/purchases', permission: 'PURCHASES' },
+  { text: 'Categories', icon: <LocalOfferIcon />, path: '/categories', permission: 'CATEGORIES' },
+  { text: 'Product Catalog', icon: <CategoryIcon />, path: '/products', permission: 'PRODUCTS' },
+  { text: 'Inventory Management', icon: <InventoryIcon />, path: '/inventory', permission: 'INVENTORY' },
+  { text: 'Transactions (Debit/Credit)', icon: <PaidIcon />, path: '/transactions', permission: 'TRANSACTIONS' },
+  { text: 'Expenses', icon: <MoneyOffIcon />, path: '/expenses', permission: 'EXPENSES' },
+  { text: 'Financial Report', icon: <AssessmentIcon />, path: '/reports', permission: 'REPORTS' },
+  { text: 'Product Performance', icon: <LeaderboardIcon />, path: '/performance', permission: 'PERFORMANCE' },
+  { text: 'Customer/Supplier Report', icon: <AssignmentIndIcon />, path: '/entity-report', permission: 'ENTITY_REPORT' },
+  { text: 'Product Ledger', icon: <ListAltIcon />, path: '/product-ledger', permission: 'PRODUCT_LEDGER' },
+  { text: 'AR/AP Aging Report', icon: <AccessTimeIcon />, path: '/aging-report', permission: 'AGING_REPORT' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings', permission: 'SETTINGS' },
 ];
 
-export default function Layout() {
+export default function Layout({ onLogout, user }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const userPermissions = user?.role?.permissions || [];
+  const visibleMenuItems = menuItems.filter(item => userPermissions.includes(item.permission));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -59,6 +69,19 @@ export default function Layout() {
     if (isMobile) {
       setMobileOpen(false);
     }
+  };
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogoutClick = () => {
+    handleCloseMenu();
+    if (onLogout) onLogout();
   };
 
   const drawer = (
@@ -73,7 +96,7 @@ export default function Layout() {
       )}
       {!isMobile && <Box sx={{ mt: 8 }} />}
       <List sx={{ px: 2, flexGrow: 1 }}>
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const isSelected = location.pathname === item.path;
           return (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
@@ -132,10 +155,46 @@ export default function Layout() {
           >
             <MenuIcon />
           </IconButton>
-          <LightModeIcon sx={{ mr: 1.5, color: 'primary.main' }} />
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary' }}>
-            Bright<span style={{ color: '#4338ca' }}>POS</span>
+          <LightModeIcon sx={{ mr: 1.5, color: 'primary.main', display: { xs: 'none', md: 'flex' } }} />
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary', flexGrow: 1 }}>
+            {isMobile ? '' : <>Bright<span style={{ color: '#4338ca' }}>POS</span></>}
           </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {user && (
+              <Typography variant="subtitle2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
+                {user.username}
+              </Typography>
+            )}
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="primary"
+            >
+              <AccountCircleIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleCloseMenu}
+            >
+              <MenuItem disabled>{user?.username}</MenuItem>
+              <MenuItem onClick={handleLogoutClick}>Logout</MenuItem>
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box
