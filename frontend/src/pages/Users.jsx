@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Button, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, IconButton, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { registerUser, getUsers, deleteUser, getRoles } from '../api';
+import { useOutletContext } from 'react-router-dom';
 
 export default function Users() {
+  const { user: currentUser } = useOutletContext();
+  const canDelete = currentUser?.role?.permissions?.includes('DELETE_USER');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('');
@@ -141,9 +144,11 @@ export default function Users() {
                 <TableCell>{user.role?.name || 'No Role'}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleString()}</TableCell>
                 <TableCell align="right">
-                  <IconButton onClick={() => handleDelete(user.id)} color="error" title="Delete">
-                    <DeleteIcon />
-                  </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(user.id)} color="error" title="Delete">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

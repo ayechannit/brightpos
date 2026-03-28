@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import {  Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton , TableContainer } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
 export default function Customers() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_CUSTOMER');
   const [customers, setCustomers] = useState([]);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
@@ -52,6 +56,18 @@ export default function Customers() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this customer?')) {
+      try {
+        await api.delete(`/customers/${id}`);
+        fetchCustomers();
+      } catch (error) {
+        console.error(error);
+        alert('Failed to delete customer (it may have sales history).');
+      }
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -79,6 +95,11 @@ export default function Customers() {
                   <IconButton onClick={() => handleOpen(customer)} color="primary">
                     <EditIcon />
                   </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(customer.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

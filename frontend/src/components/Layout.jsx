@@ -228,7 +228,7 @@ export default function Layout({ onLogout, user }) {
       <Box component="main" sx={{ flexGrow: 1, p: 0, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.default' }}>
         <Toolbar sx={{ minHeight: '64px !important' }} />
         <Box sx={{ flexGrow: 1, overflow: 'auto', p: { xs: 2, md: 3 } }}>
-          <Outlet />
+          <Outlet context={{ user }} />
         </Box>
       </Box>
     </Box>

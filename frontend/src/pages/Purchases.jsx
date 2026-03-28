@@ -5,9 +5,10 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaymentIcon from '@mui/icons-material/Payment';
 import AddIcon from '@mui/icons-material/Add';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
-function Row({ purchase, onDelete, onPay }) {
+function Row({ purchase, onDelete, onPay, canDelete }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,9 +38,11 @@ function Row({ purchase, onDelete, onPay }) {
               <PaymentIcon />
             </IconButton>
           )}
-          <IconButton color="error" onClick={() => onDelete(purchase.id)} title="Delete Purchase">
-            <DeleteIcon />
-          </IconButton>
+          {canDelete && (
+            <IconButton color="error" onClick={() => onDelete(purchase.id)} title="Delete Purchase">
+              <DeleteIcon />
+            </IconButton>
+          )}
         </TableCell>
       </TableRow>
       <TableRow>
@@ -101,6 +104,8 @@ function Row({ purchase, onDelete, onPay }) {
 }
 
 export default function Purchases() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_PURCHASE');
   const [purchases, setPurchases] = useState([]);
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -338,7 +343,7 @@ export default function Purchases() {
           </TableHead>
           <TableBody>
             {filteredPurchases.map((purchase) => (
-              <Row key={purchase.id} purchase={purchase} onDelete={handleDelete} onPay={handleOpenPay} />
+              <Row key={purchase.id} purchase={purchase} onDelete={handleDelete} onPay={handleOpenPay} canDelete={canDelete} />
             ))}
             {filteredPurchases.length === 0 && (
               <TableRow>

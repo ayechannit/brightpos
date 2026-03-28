@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
 export default function Categories() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_CATEGORY');
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -84,9 +87,11 @@ export default function Categories() {
                   <IconButton onClick={() => handleOpen(category)} color="primary">
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(category.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(category.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

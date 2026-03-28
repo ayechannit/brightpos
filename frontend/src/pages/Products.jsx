@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import {  Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem , TableContainer } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
 export default function Products() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_PRODUCT');
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
@@ -131,9 +134,11 @@ export default function Products() {
                   <IconButton onClick={() => handleOpen(product)} color="primary">
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(product.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(product.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

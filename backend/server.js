@@ -295,6 +295,16 @@ app.put('/api/customers/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/customers/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.customer.delete({ where: { id: Number(id) } });
+    res.json({ message: 'Customer deleted' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete customer (it may have sales history)' });
+  }
+});
+
 // --- Suppliers ---
 app.get('/api/suppliers', async (req, res) => {
   try {
@@ -326,6 +336,16 @@ app.put('/api/suppliers/:id', async (req, res) => {
     res.json(supplier);
   } catch (error) {
     res.status(400).json({ error: 'Failed to update supplier' });
+  }
+});
+
+app.delete('/api/suppliers/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.supplier.delete({ where: { id: Number(id) } });
+    res.json({ message: 'Supplier deleted' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete supplier (it may have purchase history)' });
   }
 });
 

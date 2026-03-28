@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import {  Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton , TableContainer } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
 export default function Suppliers() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_SUPPLIER');
   const [suppliers, setSuppliers] = useState([]);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
@@ -52,6 +56,18 @@ export default function Suppliers() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this supplier?')) {
+      try {
+        await api.delete(`/suppliers/${id}`);
+        fetchSuppliers();
+      } catch (error) {
+        console.error(error);
+        alert('Failed to delete supplier (it may have purchase history).');
+      }
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -79,6 +95,11 @@ export default function Suppliers() {
                   <IconButton onClick={() => handleOpen(supplier)} color="primary">
                     <EditIcon />
                   </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(supplier.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

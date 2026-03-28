@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import {  Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton , TableContainer } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 
 export default function Expenses() {
+  const { user } = useOutletContext();
+  const canDelete = user?.role?.permissions?.includes('DELETE_EXPENSE');
   const [expenses, setExpenses] = useState([]);
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
@@ -96,9 +99,11 @@ export default function Expenses() {
                   <IconButton onClick={() => handleEdit(expense)} color="primary">
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(expense.id)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
+                  {canDelete && (
+                    <IconButton onClick={() => handleDelete(expense.id)} color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
