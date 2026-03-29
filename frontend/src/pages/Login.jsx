@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Box, Paper, Typography, TextField, Button, Alert } from '@mui/material';
+import { Box, Paper, Typography, TextField, Alert } from '@mui/material';
 import { loginUser } from '../api';
+import Button from '../components/LoadingButton';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -56,17 +57,17 @@ export default function Login({ onLogin }) {
             margin="normal"
             required
           />
-          <Button 
+          <Button
             type="submit"
-            variant="contained" 
-            color="primary" 
+            variant="contained"
+            color="primary"
+            loading={loading}
             disabled={loading}
             sx={{ mt: 3, mb: 2, py: 1.5 }}
             fullWidth
           >
             {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
-        </form>
+          </Button>        </form>
       </Paper>
     </Box>
   );

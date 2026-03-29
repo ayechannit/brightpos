@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, TextField, Button, CircularProgress, Tabs, Tab , TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, TextField, CircularProgress, Tabs, Tab, TableContainer } from '@mui/material';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import api from '../api';
 import * as XLSX from 'xlsx';
+import Button from '../components/LoadingButton';
 
 export default function EntityReport() {
   const [tabValue, setTabValue] = useState(0);

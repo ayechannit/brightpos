@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Button, CircularProgress, Tabs, Tab , TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, CircularProgress, Tabs, Tab, TableContainer } from '@mui/material';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import api from '../api';
 import * as XLSX from 'xlsx';
+import Button from '../components/LoadingButton';
 
 export default function AgingReport() {
   const [tabValue, setTabValue] = useState(0);

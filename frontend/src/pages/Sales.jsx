@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, IconButton, Collapse, Button, TextField, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip , TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Collapse, TextField, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, TableContainer } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { useOutletContext } from 'react-router-dom';
 import api from '../api';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 function Row({ sale, onDelete, onPay, canDelete }) {
   const [open, setOpen] = useState(false);
@@ -132,13 +134,14 @@ export default function Sales() {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  const handleApplyFilters = () => {
-    fetchSales();
+  const handleApplyFilters = async () => {
+    await fetchSales();
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = async () => {
     setFilters({ startDate: '', endDate: '', voucherCode: '' });
-    api.get('/sales').then(res => setSales(res.data || []));
+    const res = await api.get('/sales');
+    setSales(res.data || []);
   };
 
   const handleDelete = async (id) => {

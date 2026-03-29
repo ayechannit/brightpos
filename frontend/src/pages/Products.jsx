@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, MenuItem , TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, TableContainer } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useOutletContext } from 'react-router-dom';
 import api from '../api';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 export default function Products() {
   const { user } = useOutletContext();

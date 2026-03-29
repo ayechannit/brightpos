@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Button, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, IconButton, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, Paper, Typography, TextField, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { registerUser, getUsers, deleteUser, getRoles } from '../api';
 import { useOutletContext } from 'react-router-dom';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 export default function Users() {
   const { user: currentUser } = useOutletContext();
@@ -111,17 +113,17 @@ export default function Users() {
               ))}
             </Select>
           </FormControl>
-          <Button 
+          <Button
             type="submit"
-            variant="contained" 
-            color="primary" 
+            variant="contained"
+            color="primary"
+            loading={saving}
             disabled={saving || !roleId}
             sx={{ mt: 2 }}
             fullWidth
           >
             {saving ? 'Creating...' : 'Create User'}
-          </Button>
-        </form>
+          </Button>        </form>
       </Paper>
 
       <Typography variant="h6" gutterBottom>Existing Users</Typography>

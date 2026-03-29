@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Button, Alert, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, TextField, Alert, CircularProgress } from '@mui/material';
 import api from '../api';
+import Button from '../components/LoadingButton';
 
 export default function Settings() {
   const [settings, setSettings] = useState({ 
@@ -115,17 +116,17 @@ export default function Settings() {
           />
         </Box>
 
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleSave} 
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+          loading={saving}
           disabled={saving}
           sx={{ mt: 3 }}
           fullWidth
         >
           {saving ? 'Saving...' : 'Save All Settings'}
-        </Button>
-      </Paper>
+        </Button>      </Paper>
     </Box>
   );
 }

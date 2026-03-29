@@ -385,6 +385,11 @@ app.get('/api/sales', async (req, res) => {
 
 app.post('/api/sales', async (req, res) => {
   const { items, totalAmount, voucherCode, paidAmount, customerId, nonRefundableFee, refundableFee } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'No items selected for sale.' });
+  }
+
   const paid = Number(paidAmount) || 0;
   const nrf = Number(nonRefundableFee) || 0;
   const rf = Number(refundableFee) || 0;
@@ -493,6 +498,11 @@ app.get('/api/purchases', async (req, res) => {
 
 app.post('/api/purchases', async (req, res) => {
   const { supplierId, supplierName, totalAmount, items, paidAmount } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'No items selected for purchase.' });
+  }
+
   const paid = Number(paidAmount) || 0;
   const total = Number(totalAmount);
   const due = total - paid;

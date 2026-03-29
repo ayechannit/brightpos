@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Button, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, IconButton, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
+import { Box, Paper, Typography, TextField, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getRoles, createRole, deleteRole } from '../api';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 const AVAILABLE_PERMISSIONS = [
   { key: 'DASHBOARD', label: 'Dashboard' },
@@ -137,16 +139,16 @@ export default function Roles() {
             ))}
           </FormGroup>
 
-          <Button 
+          <Button
             type="submit"
-            variant="contained" 
-            color="primary" 
+            variant="contained"
+            color="primary"
+            loading={saving}
             disabled={saving || !name || selectedPermissions.length === 0}
             sx={{ mt: 3 }}
           >
             {saving ? 'Creating...' : 'Create Role'}
-          </Button>
-        </form>
+          </Button>        </form>
       </Paper>
 
       <Typography variant="h6" gutterBottom>Existing Roles</Typography>

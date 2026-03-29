@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Button, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, IconButton, Grid, Collapse, Tabs, Tab, Chip, Divider, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, Grid, Collapse, Tabs, Tab, Chip, Divider, TableContainer } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -7,6 +7,8 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import AddIcon from '@mui/icons-material/Add';
 import { useOutletContext } from 'react-router-dom';
 import api from '../api';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 function Row({ purchase, onDelete, onPay, canDelete }) {
   const [open, setOpen] = useState(false);
@@ -167,13 +169,14 @@ export default function Purchases() {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  const handleApplyFilters = () => {
-    fetchPurchases();
+  const handleApplyFilters = async () => {
+    await fetchPurchases();
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = async () => {
     setFilters({ startDate: '', endDate: '', supplierId: '' });
-    api.get('/purchases').then(res => setPurchases(res.data || []));
+    const res = await api.get('/purchases');
+    setPurchases(res.data || []);
   };
 
   const addToCart = () => {
@@ -195,9 +198,12 @@ export default function Purchases() {
   };
 
   const handleSave = async () => {
-    if (cart.length === 0) return;
-    
-    const totalAmount = cart.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0);
+    if (cart.length === 0) {
+      alert("Please add at least one item to the purchase cart.");
+      return;
+    }
+
+    const totalCartAmount = cart.reduce((sum, item) => sum + (item.costPrice * item.quantity), 0);
     const payload = {
       supplierId: selectedSupplier?.id || null,
       supplierName: selectedSupplier?.name || '',

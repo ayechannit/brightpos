@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, Grid, Paper, Typography, Button, TextField, List, ListItem, ListItemText, Divider, IconButton, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardActionArea, InputAdornment, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Grid, Paper, Typography, TextField, List, ListItem, ListItemText, Divider, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardActionArea, InputAdornment, Checkbox, FormControlLabel } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -7,6 +7,8 @@ import PrintIcon from '@mui/icons-material/Print';
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
 import { useReactToPrint } from 'react-to-print';
 import api from '../api';
+import Button from '../components/LoadingButton';
+import IconButton from '../components/LoadingIconButton';
 
 export default function POS() {
   const [products, setProducts] = useState([]);
@@ -85,7 +87,10 @@ export default function POS() {
   });
 
   const completeSale = async () => {
-    if (cart.length === 0) return;
+    if (cart.length === 0) {
+      alert("Please select at least one item before completing the sale.");
+      return;
+    }
     
     const payload = {
       totalAmount: subtotal,
