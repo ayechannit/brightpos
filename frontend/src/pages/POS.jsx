@@ -311,14 +311,14 @@ export default function POS() {
 
               <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <TextField 
-                  fullWidth label="Clinic Fee" 
+                  fullWidth label="Consultation Fee" 
                   variant="outlined" size="small" type="number"
                   value={clinicFee} onChange={(e) => setClinicFee(e.target.value)}
                   sx={{ bgcolor: 'white' }}
                 />
                 <FormControlLabel
                   control={<Checkbox checked={isRefundableClinicFee} onChange={(e) => setIsRefundableClinicFee(e.target.checked)} size="small" />}
-                  label={<Typography variant="body2">Refundable Clinic Fee</Typography>}
+                  label={<Typography variant="body2">Refundable Consultation Fee</Typography>}
                   sx={{ ml: 0, mt: -0.5 }}
                 />
               </Box>
@@ -469,13 +469,13 @@ export default function POS() {
           </div>
           {(Number(serviceFee) > 0) && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span>{isRefundableFee ? 'Service Fee (Refund)' : 'Service Fee (N.R)'}:</span>
+              <span>{isRefundableFee ? 'Service Fee' : 'Service Fee'}:</span>
               <span>{(Number(serviceFee)).toLocaleString()} Ks</span>
             </div>
           )}
           {(Number(clinicFee) > 0) && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span>{isRefundableClinicFee ? 'Clinic Fee (Refund)' : 'Clinic Fee (N.R)'}:</span>
+              <span>{isRefundableClinicFee ? 'Consultation Fee' : 'Consultation Fee'}:</span>
               <span>{(Number(clinicFee)).toLocaleString()} Ks</span>
             </div>
           )}
