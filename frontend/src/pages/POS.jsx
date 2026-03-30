@@ -29,6 +29,8 @@ export default function POS() {
   const [paidAmount, setPaidAmount] = useState('');
   const [serviceFee, setServiceFee] = useState('');
   const [isRefundableFee, setIsRefundableFee] = useState(false);
+  const [clinicFee, setClinicFee] = useState('');
+  const [isRefundableClinicFee, setIsRefundableClinicFee] = useState(false);
 
   // New Customer Modal State
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
@@ -68,8 +70,14 @@ export default function POS() {
     setCart(cart.filter(item => item.id !== id));
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-  const totalAmount = subtotal + (Number(serviceFee) || 0);
+  const updateCartQty = (id, newQty) => {
+    const val = newQty === '' ? '' : parseInt(newQty, 10);
+    if (val !== '' && val < 1) return;
+    setCart(cart.map(item => item.id === id ? { ...item, qty: val } : item));
+  };
+
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * (Number(item.qty) || 0)), 0);
+  const totalAmount = subtotal + (Number(serviceFee) || 0) + (Number(clinicFee) || 0);
   const dueAmount = totalAmount - (Number(paidAmount) || 0);
 
   // react-to-print setup
@@ -81,6 +89,8 @@ export default function POS() {
       setPaidAmount('');
       setServiceFee('');
       setIsRefundableFee(false);
+      setClinicFee('');
+      setIsRefundableClinicFee(false);
       setSelectedCustomer(null);
       setVoucherCode(`INV-${Date.now()}`); 
     }
@@ -96,10 +106,12 @@ export default function POS() {
       totalAmount: subtotal,
       nonRefundableFee: isRefundableFee ? 0 : (Number(serviceFee) || 0),
       refundableFee: isRefundableFee ? (Number(serviceFee) || 0) : 0,
+      nonRefundableClinicFee: isRefundableClinicFee ? 0 : (Number(clinicFee) || 0),
+      refundableClinicFee: isRefundableClinicFee ? (Number(clinicFee) || 0) : 0,
       voucherCode,
       customerId: selectedCustomer?.id || null,
       paidAmount: Number(paidAmount) || 0,
-      items: cart.map(c => ({ productId: c.id, quantity: c.qty, price: c.price }))
+      items: cart.map(c => ({ productId: c.id, quantity: Number(c.qty) || 1, price: c.price }))
     };
 
     try {
@@ -237,10 +249,21 @@ export default function POS() {
                   >
                     <ListItemText 
                       primary={<Typography fontWeight="600" variant="body1">{item.name}</Typography>} 
-                      secondary={<Typography color="text.secondary" variant="body2">{item.price.toLocaleString()} Ks <strong style={{color: '#1e293b'}}>x {item.qty}</strong></Typography>} 
+                      secondary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                          <Typography color="text.secondary" variant="body2">{item.price.toLocaleString()} Ks x</Typography>
+                          <TextField
+                            type="number"
+                            size="small"
+                            value={item.qty}
+                            onChange={(e) => updateCartQty(item.id, e.target.value)}
+                            sx={{ width: '60px', '& .MuiInputBase-input': { p: 0.5, textAlign: 'center', fontSize: '0.875rem' } }}
+                          />
+                        </Box>
+                      } 
                     />
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography fontWeight="bold" color="primary.dark">{(item.price * item.qty).toLocaleString()}</Typography>
+                      <Typography fontWeight="bold" color="primary.dark">{(item.price * (Number(item.qty) || 0)).toLocaleString()}</Typography>
                       <IconButton 
                         edge="end" 
                         size="small" 
@@ -282,6 +305,20 @@ export default function POS() {
                 <FormControlLabel
                   control={<Checkbox checked={isRefundableFee} onChange={(e) => setIsRefundableFee(e.target.checked)} size="small" />}
                   label={<Typography variant="body2">Refundable Service Fee</Typography>}
+                  sx={{ ml: 0, mt: -0.5 }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <TextField 
+                  fullWidth label="Clinic Fee" 
+                  variant="outlined" size="small" type="number"
+                  value={clinicFee} onChange={(e) => setClinicFee(e.target.value)}
+                  sx={{ bgcolor: 'white' }}
+                />
+                <FormControlLabel
+                  control={<Checkbox checked={isRefundableClinicFee} onChange={(e) => setIsRefundableClinicFee(e.target.checked)} size="small" />}
+                  label={<Typography variant="body2">Refundable Clinic Fee</Typography>}
                   sx={{ ml: 0, mt: -0.5 }}
                 />
               </Box>
@@ -434,6 +471,12 @@ export default function POS() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
               <span>{isRefundableFee ? 'Service Fee (Refund)' : 'Service Fee (N.R)'}:</span>
               <span>{(Number(serviceFee)).toLocaleString()} Ks</span>
+            </div>
+          )}
+          {(Number(clinicFee) > 0) && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+              <span>{isRefundableClinicFee ? 'Clinic Fee (Refund)' : 'Clinic Fee (N.R)'}:</span>
+              <span>{(Number(clinicFee)).toLocaleString()} Ks</span>
             </div>
           )}
 

@@ -384,7 +384,7 @@ app.get('/api/sales', async (req, res) => {
 });
 
 app.post('/api/sales', async (req, res) => {
-  const { items, totalAmount, voucherCode, paidAmount, customerId, nonRefundableFee, refundableFee } = req.body;
+  const { items, totalAmount, voucherCode, paidAmount, customerId, nonRefundableFee, refundableFee, nonRefundableClinicFee, refundableClinicFee } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'No items selected for sale.' });
@@ -393,7 +393,9 @@ app.post('/api/sales', async (req, res) => {
   const paid = Number(paidAmount) || 0;
   const nrf = Number(nonRefundableFee) || 0;
   const rf = Number(refundableFee) || 0;
-  const total = Number(totalAmount) + nrf + rf;
+  const ncf = Number(nonRefundableClinicFee) || 0;
+  const rcf = Number(refundableClinicFee) || 0;
+  const total = Number(totalAmount) + nrf + rf + ncf + rcf;
   const due = total - paid;
 
   try {
@@ -405,6 +407,8 @@ app.post('/api/sales', async (req, res) => {
           dueAmount: due,
           nonRefundableFee: nrf,
           refundableFee: rf,
+          nonRefundableClinicFee: ncf,
+          refundableClinicFee: rcf,
           voucherCode: voucherCode || `INV-${Date.now()}`,
           customerId: customerId ? Number(customerId) : null,
           items: {
@@ -697,7 +701,15 @@ app.get('/api/reports/financial', async (req, res) => {
     // 1. Sales Metrics (Accrual Basis)
     const salesAgg = await prisma.sale.aggregate({
       where: whereClause,
-      _sum: { totalAmount: true, paidAmount: true, dueAmount: true, nonRefundableFee: true, refundableFee: true }
+      _sum: { 
+        totalAmount: true, 
+        paidAmount: true, 
+        dueAmount: true, 
+        nonRefundableFee: true, 
+        refundableFee: true,
+        nonRefundableClinicFee: true,
+        refundableClinicFee: true
+      }
     });
 
     // 2. Purchase Metrics (Accrual Basis)
@@ -725,8 +737,9 @@ app.get('/api/reports/financial', async (req, res) => {
 
     // Revenue includes total sales amount (which has both fees)
     const revenue = salesAgg._sum.totalAmount || 0;
-    const totalFees = (salesAgg._sum.nonRefundableFee || 0) + (salesAgg._sum.refundableFee || 0);
-    const productRevenue = revenue - totalFees;
+    const totalServiceFees = (salesAgg._sum.nonRefundableFee || 0) + (salesAgg._sum.refundableFee || 0);
+    const totalClinicFees = (salesAgg._sum.nonRefundableClinicFee || 0) + (salesAgg._sum.refundableClinicFee || 0);
+    const productRevenue = revenue - totalServiceFees - totalClinicFees;
 
     const costOfGoods = purchaseAgg._sum.totalAmount || 0;
     const grossProfit = revenue - costOfGoods;
@@ -738,9 +751,12 @@ app.get('/api/reports/financial', async (req, res) => {
       summary: {
         totalRevenue: revenue,
         productRevenue,
-        totalFees,
+        totalServiceFees,
         nonRefundableFees: salesAgg._sum.nonRefundableFee || 0,
         refundableFees: salesAgg._sum.refundableFee || 0,
+        totalClinicFees,
+        nonRefundableClinicFees: salesAgg._sum.nonRefundableClinicFee || 0,
+        refundableClinicFees: salesAgg._sum.refundableClinicFee || 0,
         totalPurchases: costOfGoods,
         grossProfit: grossProfit,
         totalExpenses: expenseBreakdown.reduce((sum, e) => sum + e.amount, 0),

@@ -23,8 +23,8 @@ function Row({ sale, onDelete, onPay, canDelete }) {
         <TableCell component="th" scope="row">{sale.voucherCode}</TableCell>
         <TableCell>{new Date(sale.createdAt).toLocaleDateString()}</TableCell>
         <TableCell>{sale.customer?.name || 'Walk-in'}</TableCell>
-        <TableCell>{(sale.nonRefundableFee || 0).toLocaleString()} Ks</TableCell>
-        <TableCell>{(sale.refundableFee || 0).toLocaleString()} Ks</TableCell>
+        <TableCell>{((sale.nonRefundableFee || 0) + (sale.refundableFee || 0)).toLocaleString()} Ks</TableCell>
+        <TableCell>{((sale.nonRefundableClinicFee || 0) + (sale.refundableClinicFee || 0)).toLocaleString()} Ks</TableCell>
         <TableCell>{sale.totalAmount.toLocaleString()} Ks</TableCell>
         <TableCell>
           <Chip 
@@ -230,8 +230,8 @@ export default function Sales() {
               <TableCell>Voucher</TableCell>
               <TableCell>Date</TableCell>
               <TableCell>Customer</TableCell>
-              <TableCell>Fee (N.R)</TableCell>
-              <TableCell>Fee (Ref)</TableCell>
+              <TableCell>Svc Fee</TableCell>
+              <TableCell>Clinic Fee</TableCell>
               <TableCell>Total</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right">Actions</TableCell>

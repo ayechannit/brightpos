@@ -74,6 +74,8 @@ model Sale {
   dueAmount        Float         @default(0)
   nonRefundableFee Float         @default(0)
   refundableFee    Float         @default(0)
+  nonRefundableClinicFee Float   @default(0)
+  refundableClinicFee    Float   @default(0)
   isDeleted        Boolean       @default(false)
   createdAt        DateTime      @default(now())
   items            SaleItem[]

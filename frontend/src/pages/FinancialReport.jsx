@@ -46,9 +46,12 @@ export default function FinancialReport() {
       ["Category", "Amount (Ks)"],
       ["Total Revenue (Sales)", report.summary.totalRevenue],
       ["- Product Revenue", report.summary.productRevenue],
-      ["- Service Fees (All)", report.summary.totalFees],
+      ["- Service Fees (All)", report.summary.totalServiceFees],
       ["  - Non-Refundable", report.summary.nonRefundableFees],
       ["  - Refundable", report.summary.refundableFees],
+      ["- Clinic Fees (All)", report.summary.totalClinicFees],
+      ["  - Non-Refundable", report.summary.nonRefundableClinicFees],
+      ["  - Refundable", report.summary.refundableClinicFees],
       ["Total Cost of Goods (Purchases)", report.summary.totalPurchases],
       ["Gross Profit", report.summary.grossProfit],
       ["Total Expenses", report.summary.totalExpenses],
@@ -147,6 +150,14 @@ export default function FinancialReport() {
               <Typography>Service Fees (Refundable)</Typography>
               <Typography fontWeight="bold" color="info.main">+{report.summary.refundableFees.toLocaleString()} Ks</Typography>
             </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography>Clinic Fees (Non-Refundable)</Typography>
+              <Typography fontWeight="bold" color="success.main">+{report.summary.nonRefundableClinicFees.toLocaleString()} Ks</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography>Clinic Fees (Refundable)</Typography>
+              <Typography fontWeight="bold" color="info.main">+{report.summary.refundableClinicFees.toLocaleString()} Ks</Typography>
+            </Box>
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Typography>Accounts Receivable (Customers owe you)</Typography>
@@ -205,7 +216,7 @@ export default function FinancialReport() {
               <strong>Liquidity Check:</strong> Your current net cash flow is <strong>{report.summary.netCashFlow.toLocaleString()} Ks</strong>. This represents the actual liquid cash movement in your shop.
             </Typography>
             <Typography variant="body2" paragraph>
-              <strong>Service Revenue:</strong> You have collected <strong>{report.summary.totalFees.toLocaleString()} Ks</strong> in total service fees this period.
+              <strong>Service & Clinic Revenue:</strong> You have collected <strong>{(report.summary.totalServiceFees + report.summary.totalClinicFees).toLocaleString()} Ks</strong> in total fees (Service: {report.summary.totalServiceFees.toLocaleString()} Ks, Clinic: {report.summary.totalClinicFees.toLocaleString()} Ks) this period.
             </Typography>
             <Typography variant="body2" paragraph>
               <strong>Asset Valuation:</strong> Your inventory is currently valued at <strong>{report.balanceSheet.inventoryValue.toLocaleString()} Ks</strong>. Maintaining optimal stock levels is key to reducing holding costs.
