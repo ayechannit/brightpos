@@ -207,7 +207,7 @@ export default function Purchases() {
     const payload = {
       supplierId: selectedSupplier?.id || null,
       supplierName: selectedSupplier?.name || '',
-      totalAmount,
+      totalAmount: totalCartAmount,
       paidAmount: Number(paidAmount) || 0,
       items: cart.map(c => ({
         productId: c.product.id,
