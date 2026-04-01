@@ -237,6 +237,7 @@ export default function Purchases() {
         fetchPurchases();
       } catch (error) {
         console.error("Failed to delete purchase", error);
+        alert(error.response?.data?.error || "Failed to delete purchase.");
       }
     }
   };

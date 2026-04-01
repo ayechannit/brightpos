@@ -72,6 +72,7 @@ export default function Expenses() {
         fetchExpenses();
       } catch (error) {
         console.error(error);
+        alert(error.response?.data?.error || 'Failed to delete expense.');
       }
     }
   };

@@ -85,6 +85,7 @@ export const deleteSale = async (id) => (await api.delete(`/sales/${id}`)).data;
 // --- Purchases ---
 export const getPurchases = async (filters) => (await api.get('/purchases', { params: filters })).data;
 export const createPurchase = async (data) => (await api.post('/purchases', data)).data;
+export const deletePurchase = async (id) => (await api.delete(`/purchases/${id}`)).data;
 
 // --- Expenses ---
 export const getExpenses = async () => (await api.get('/expenses')).data;

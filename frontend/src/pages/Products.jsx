@@ -86,6 +86,7 @@ export default function Products() {
         fetchData();
       } catch (error) {
         console.error(error);
+        alert(error.response?.data?.error || 'Failed to delete product.');
       }
     }
   };

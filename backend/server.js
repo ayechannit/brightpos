@@ -559,6 +559,29 @@ app.post('/api/purchases', async (req, res) => {
   }
 });
 
+app.delete('/api/purchases/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const existing = await prisma.purchase.findUnique({ where: { id: Number(id) }, include: { items: true } });
+    if (!existing) return res.status(404).json({ error: 'Purchase not found' });
+    
+    await prisma.$transaction(async (tx) => {
+      for (const item of existing.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } }
+        });
+      }
+      await tx.purchase.update({ where: { id: Number(id) }, data: { isDeleted: true } });
+    });
+    
+    res.json({ message: 'Purchase deleted (Soft)' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Failed' });
+  }
+});
+
 // --- Expenses ---
 app.get('/api/expenses', async (req, res) => {
   try {
@@ -591,6 +614,16 @@ app.post('/api/expenses', async (req, res) => {
       return expense;
     });
     res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed' });
+  }
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.expense.update({ where: { id: Number(id) }, data: { isDeleted: true } });
+    res.json({ message: 'Expense deleted (Soft)' });
   } catch (error) {
     res.status(400).json({ error: 'Failed' });
   }
