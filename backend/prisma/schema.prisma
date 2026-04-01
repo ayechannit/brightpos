@@ -41,6 +41,7 @@ model Product {
   stock         Int            @default(0)
   categoryId    Int?
   category      Category?      @relation(fields: [categoryId], references: [id])
+  isDeleted     Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   SaleItems     SaleItem[]

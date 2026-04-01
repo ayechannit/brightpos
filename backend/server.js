@@ -196,7 +196,7 @@ app.delete('/api/categories/:id', async (req, res) => {
 app.get('/api/products', async (req, res) => {
   const { categoryId } = req.query;
   try {
-    let where = {};
+    let where = { isDeleted: false };
     if (categoryId) {
       where.categoryId = Number(categoryId);
     }
@@ -254,8 +254,8 @@ app.put('/api/products/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.product.delete({ where: { id: Number(id) } });
-    res.json({ message: 'Product deleted permanently' });
+    await prisma.product.update({ where: { id: Number(id) }, data: { isDeleted: true } });
+    res.json({ message: 'Product deleted (Soft)' });
   } catch (error) {
     res.status(400).json({ error: 'Failed to delete product' });
   }
@@ -699,7 +699,7 @@ app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    const productCount = await prisma.product.count();
+    const productCount = await prisma.product.count({ where: { isDeleted: false } });
     const salesToday = await prisma.sale.findMany({
       where: { isDeleted: false, createdAt: { gte: startOfDay } }
     });
@@ -759,7 +759,7 @@ app.get('/api/reports/financial', async (req, res) => {
     });
 
     // 4. Inventory Value (Asset) - Current Snapshot
-    const products = await prisma.product.findMany();
+    const products = await prisma.product.findMany({ where: { isDeleted: false } });
     const inventoryValue = products.reduce((sum, p) => sum + (p.stock * p.price), 0); // Valuation at Retail Price
 
     // 5. Expense Breakdown
@@ -932,7 +932,7 @@ app.get('/api/reports/product-ledger', async (req, res) => {
       }
     }
 
-    let productWhere = {};
+    let productWhere = { isDeleted: false };
     if (categoryId) {
       productWhere.categoryId = Number(categoryId);
     }
