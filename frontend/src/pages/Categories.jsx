@@ -61,7 +61,7 @@ export default function Categories() {
         fetchCategories();
       } catch (error) {
         console.error(error);
-        alert('Failed to delete category (it may be in use by a product).');
+        alert(error.response?.data?.error || 'Failed to delete category.');
       }
     }
   };

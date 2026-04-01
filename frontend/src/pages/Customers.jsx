@@ -65,7 +65,7 @@ export default function Customers() {
         fetchCustomers();
       } catch (error) {
         console.error(error);
-        alert('Failed to delete customer (it may have sales history).');
+        alert(error.response?.data?.error || 'Failed to delete customer.');
       }
     }
   };

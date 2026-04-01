@@ -35,7 +35,10 @@ const authenticateToken = (req, res, next) => {
 // --- Roles ---
 app.get('/api/roles', async (req, res) => {
   try {
-    const roles = await prisma.role.findMany({ orderBy: { name: 'asc' } });
+    const roles = await prisma.role.findMany({ 
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' } 
+    });
     res.json(roles);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch roles' });
@@ -69,10 +72,13 @@ app.put('/api/roles/:id', async (req, res) => {
 app.delete('/api/roles/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.role.delete({ where: { id: Number(id) } });
+    await prisma.role.update({ 
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
     res.json({ message: 'Role deleted' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to delete role (it may be in use)' });
+    res.status(400).json({ error: 'Failed to delete role' });
   }
 });
 
@@ -151,7 +157,10 @@ app.delete('/api/users/:id', async (req, res) => {
 // --- Categories ---
 app.get('/api/categories', async (req, res) => {
   try {
-    const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
+    const categories = await prisma.category.findMany({ 
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' } 
+    });
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch categories' });
@@ -185,10 +194,13 @@ app.put('/api/categories/:id', async (req, res) => {
 app.delete('/api/categories/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.category.delete({ where: { id: Number(id) } });
+    await prisma.category.update({ 
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
     res.json({ message: 'Category deleted' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to delete category (it may be in use)' });
+    res.status(400).json({ error: 'Failed to delete category' });
   }
 });
 
@@ -264,7 +276,10 @@ app.delete('/api/products/:id', async (req, res) => {
 // --- Customers ---
 app.get('/api/customers', async (req, res) => {
   try {
-    const customers = await prisma.customer.findMany({ orderBy: { name: 'asc' } });
+    const customers = await prisma.customer.findMany({ 
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' } 
+    });
     res.json(customers);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch customers' });
@@ -298,17 +313,23 @@ app.put('/api/customers/:id', async (req, res) => {
 app.delete('/api/customers/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.customer.delete({ where: { id: Number(id) } });
+    await prisma.customer.update({ 
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
     res.json({ message: 'Customer deleted' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to delete customer (it may have sales history)' });
+    res.status(400).json({ error: 'Failed to delete customer' });
   }
 });
 
 // --- Suppliers ---
 app.get('/api/suppliers', async (req, res) => {
   try {
-    const suppliers = await prisma.supplier.findMany({ orderBy: { name: 'asc' } });
+    const suppliers = await prisma.supplier.findMany({ 
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' } 
+    });
     res.json(suppliers);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch suppliers' });
@@ -342,10 +363,13 @@ app.put('/api/suppliers/:id', async (req, res) => {
 app.delete('/api/suppliers/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.supplier.delete({ where: { id: Number(id) } });
+    await prisma.supplier.update({ 
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
     res.json({ message: 'Supplier deleted' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to delete supplier (it may have purchase history)' });
+    res.status(400).json({ error: 'Failed to delete supplier' });
   }
 });
 

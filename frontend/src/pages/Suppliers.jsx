@@ -65,7 +65,7 @@ export default function Suppliers() {
         fetchSuppliers();
       } catch (error) {
         console.error(error);
-        alert('Failed to delete supplier (it may have purchase history).');
+        alert(error.response?.data?.error || 'Failed to delete supplier.');
       }
     }
   };
