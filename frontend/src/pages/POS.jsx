@@ -147,10 +147,10 @@ export default function POS() {
   return (
     <Box sx={{ flexGrow: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
       
-      <Grid container spacing={3} sx={{ flexGrow: 1, height: { xs: 'auto', md: 'calc(100vh - 100px)' } }}>
+      <Grid container spacing={3} sx={{ flexGrow: 1, height: { xs: 'auto', sm: 'calc(100vh - 100px)' } }}>
         
         {/* Left Side: Product List & Search */}
-        <Grid item xs={12} md={7} lg={8} sx={{ height: { xs: '60vh', md: '100%' }, display: 'flex', flexDirection: 'column' }}>
+        <Grid item xs={12} sm={7} md={7} lg={7} sx={{ height: { xs: '60vh', sm: '100%' }, display: 'flex', flexDirection: 'column' }}>
           
           {/* Header & Search */}
           <Paper elevation={0} sx={{ p: 2, mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', bgcolor: 'transparent', borderBottom: '1px solid', borderColor: 'divider', borderRadius: 0, px: 0 }}>
@@ -181,7 +181,7 @@ export default function POS() {
           <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 1, pb: 2 }}>
             <Grid container spacing={2}>
               {filteredProducts.map(product => (
-                <Grid item xs={6} sm={4} md={4} lg={3} key={product.id}>
+                <Grid item xs={6} sm={6} md={4} lg={3} key={product.id}>
                   <Card 
                     sx={{ 
                       height: '100%', 
@@ -226,7 +226,7 @@ export default function POS() {
         </Grid>
 
         {/* Right Side: Cart / Checkout */}
-        <Grid item xs={12} md={5} lg={4} sx={{ height: '100%' }}>
+        <Grid item xs={12} sm={5} md={5} lg={5} sx={{ height: '100%' }}>
           <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden' }}>
             
             {/* Cart Header */}
@@ -495,7 +495,7 @@ export default function POS() {
 
           <Divider sx={{ borderStyle: 'dashed', my: 1, borderColor: '#000' }} />
           
-          <Typography variant="body2" align="center" sx={{ mt: 2, fontSize: '10px' }}>Thank you for your business!</Typography>
+          <Typography variant="body2" align="center" sx={{ mt: 2, fontSize: '10px' }}>Thank you!</Typography>
           <Typography variant="body2" align="center" sx={{ fontSize: '10px' }}>{new Date().toLocaleString()}</Typography>
         </div>
       </div>
