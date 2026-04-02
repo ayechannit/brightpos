@@ -147,10 +147,10 @@ export default function POS() {
   return (
     <Box sx={{ flexGrow: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
       
-      <Grid container spacing={3} sx={{ flexGrow: 1, height: 'calc(100vh - 100px)' }}>
+      <Grid container spacing={3} sx={{ flexGrow: 1, height: { xs: 'auto', sm: 'calc(100vh - 100px)' } }}>
         
         {/* Left Side: Product List & Search */}
-        <Grid item xs={7} sm={8} md={8} lg={9} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Grid item xs={12} sm={8} md={8} lg={9} sx={{ height: { xs: '60vh', sm: '100%' }, display: 'flex', flexDirection: 'column' }}>
           
           {/* Header & Search */}
           <Paper elevation={0} sx={{ p: 2, mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', bgcolor: 'transparent', borderBottom: '1px solid', borderColor: 'divider', borderRadius: 0, px: 0 }}>
@@ -226,7 +226,7 @@ export default function POS() {
         </Grid>
 
         {/* Right Side: Cart / Checkout */}
-        <Grid item xs={5} sm={4} md={4} lg={3} sx={{ height: '100%' }}>
+        <Grid item xs={12} sm={4} md={4} lg={3} sx={{ height: '100%' }}>
           <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden' }}>
             
             {/* Cart Header */}
