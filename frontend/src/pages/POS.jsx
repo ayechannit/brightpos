@@ -147,10 +147,25 @@ export default function POS() {
   return (
     <Box sx={{ flexGrow: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
       
-      <Grid container spacing={3} sx={{ flexGrow: 1, height: { xs: 'auto', sm: 'calc(100vh - 100px)' } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' }, 
+        gap: { xs: 2, md: 3 }, 
+        flexGrow: 1, 
+        height: { xs: 'auto', md: 'calc(100vh - 100px)' },
+        overflow: 'hidden',
+        justifyContent: 'center'
+      }}>
         
         {/* Left Side: Product List & Search */}
-        <Grid item xs={12} sm={8} md={8} lg={9} sx={{ height: { xs: '60vh', sm: '100%' }, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ 
+          flex: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minWidth: 0,
+          maxWidth: { lg: '1200px' },
+          height: { xs: '60vh', md: '100%' }
+        }}>
           
           {/* Header & Search */}
           <Paper elevation={0} sx={{ p: 2, mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap', bgcolor: 'transparent', borderBottom: '1px solid', borderColor: 'divider', borderRadius: 0, px: 0 }}>
@@ -181,7 +196,7 @@ export default function POS() {
           <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 1, pb: 2 }}>
             <Grid container spacing={2}>
               {filteredProducts.map(product => (
-                <Grid item xs={6} sm={6} md={4} lg={4} key={product.id}>
+                <Grid item xs={12} sm={6} md={6} lg={4} xl={3} key={product.id}>
                   <Card 
                     sx={{ 
                       height: '140px', 
@@ -223,150 +238,176 @@ export default function POS() {
               )}
             </Grid>
           </Box>
-        </Grid>
+        </Box>
 
         {/* Right Side: Cart / Checkout */}
-        <Grid item xs={12} sm={4} md={4} lg={3} sx={{ height: '100%' }}>
+        <Box sx={{ 
+          width: { xs: '100%', md: '340px', lg: '400px', xl: '450px' }, 
+          height: { xs: 'auto', md: '100%' },
+          minHeight: { xs: '400px', md: 'auto' },
+          flexShrink: 0
+        }}>
           <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden' }}>
             
-            {/* Cart Header */}
-            <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText', display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Cart Header - Fixed at Top */}
+            <Box sx={{ p: 2, bgcolor: 'primary.main', color: 'primary.contrastText', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
               <ShoppingCartCheckoutIcon />
               <Typography variant="h6" fontWeight="bold">Current Order</Typography>
             </Box>
             
-            {/* Cart Items List */}
-            <List sx={{ flexGrow: 1, overflowY: 'auto', p: 0, bgcolor: 'background.paper' }}>
-              {cart.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'text.secondary', p: 3, textAlign: 'center' }}>
-                  <Typography>Cart is empty. Select products to begin.</Typography>
-                </Box>
-              ) : (
-                cart.map((item) => (
-                  <ListItem 
-                    key={item.id}
-                    sx={{ borderBottom: '1px solid', borderColor: 'divider', py: 1.5, px: 2 }}
-                  >
-                    <ListItemText 
-                      primary={<Typography fontWeight="600" variant="body1">{item.name}</Typography>} 
-                      secondary={
+            {/* Scrollable Container for Cart Items and Checkout Section */}
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', bgcolor: '#f8fafc' }}>
+              
+              {/* Cart Items List */}
+              <List sx={{ p: 0, bgcolor: 'background.paper' }}>
+                {cart.length === 0 ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, color: 'text.secondary', px: 3, textAlign: 'center' }}>
+                    <Typography>Cart is empty. Select products to begin.</Typography>
+                  </Box>
+                ) : (
+                  cart.map((item) => (
+                    <ListItem 
+                      key={item.id}
+                      sx={{ 
+                        borderBottom: '1px solid', 
+                        borderColor: 'divider', 
+                        py: 1.5, 
+                        px: { xs: 1, sm: 2 },
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography fontWeight="600" variant="body1" noWrap>{item.name}</Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Typography color="text.secondary" variant="body2">{item.price.toLocaleString()} Ks x</Typography>
+                          <Typography color="text.secondary" variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            {item.price.toLocaleString()} Ks x
+                          </Typography>
                           <TextField
                             type="number"
                             size="small"
                             value={item.qty}
                             onChange={(e) => updateCartQty(item.id, e.target.value)}
-                            sx={{ width: '60px', '& .MuiInputBase-input': { p: 0.5, textAlign: 'center', fontSize: '0.875rem' } }}
+                            sx={{ width: '70px', '& .MuiInputBase-input': { p: 0.5, textAlign: 'center', fontSize: '0.875rem' } }}
                           />
                         </Box>
-                      } 
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography fontWeight="bold" color="primary.dark">{(item.price * (Number(item.qty) || 0)).toLocaleString()}</Typography>
-                      <IconButton 
-                        edge="end" 
-                        size="small" 
-                        onClick={() => removeFromCart(item.id)}
-                        sx={{ color: 'error.main', bgcolor: 'error.50', '&:hover': { bgcolor: 'error.main', color: 'white' } }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </ListItem>
-                ))
-              )}
-            </List>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>
+                        <Typography fontWeight="bold" color="primary.dark" sx={{ whiteSpace: 'nowrap', minWidth: '70px', textAlign: 'right' }}>
+                          {(item.price * (Number(item.qty) || 0)).toLocaleString()}
+                        </Typography>
+                        <IconButton 
+                          edge="end" 
+                          size="small" 
+                          onClick={() => removeFromCart(item.id)}
+                          sx={{ 
+                            color: 'error.main', 
+                            bgcolor: 'error.50', 
+                            '&:hover': { bgcolor: 'error.main', color: 'white' },
+                            width: '32px',
+                            height: '32px'
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </ListItem>
+                  ))
+                )}
+              </List>
 
-            {/* Checkout Section */}
-            <Box sx={{ p: 2.5, bgcolor: '#f8fafc', borderTop: '1px solid', borderColor: 'divider' }}>
-              
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Autocomplete
-                  sx={{ flexGrow: 1, bgcolor: 'white' }}
-                  options={customers}
-                  getOptionLabel={(option) => `${option.name} (${option.phone || 'No Phone'})`}
-                  value={selectedCustomer}
-                  onChange={(e, val) => setSelectedCustomer(val)}
-                  renderInput={(params) => <TextField {...params} label="Select Customer" variant="outlined" size="small" />}
-                />
-                <IconButton color="primary" sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'divider', borderRadius: 1 }} onClick={() => setCustomerModalOpen(true)} title="Add New Customer">
-                  <PersonAddIcon />
-                </IconButton>
-              </Box>
+              {/* Checkout Section - Inside Scrollable Container */}
+              <Box sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
+                
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <Autocomplete
+                    sx={{ flexGrow: 1, bgcolor: 'white' }}
+                    options={customers}
+                    getOptionLabel={(option) => `${option.name} (${option.phone || 'No Phone'})`}
+                    value={selectedCustomer}
+                    onChange={(e, val) => setSelectedCustomer(val)}
+                    renderInput={(params) => <TextField {...params} label="Select Customer" variant="outlined" size="small" />}
+                  />
+                  <IconButton color="primary" sx={{ bgcolor: 'white', border: '1px solid', borderColor: 'divider', borderRadius: 1 }} onClick={() => setCustomerModalOpen(true)} title="Add New Customer">
+                    <PersonAddIcon />
+                  </IconButton>
+                </Box>
 
-              <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <TextField 
+                    fullWidth label="Service Fee" 
+                    variant="outlined" size="small" type="number"
+                    value={serviceFee} onChange={(e) => setServiceFee(e.target.value)}
+                    sx={{ bgcolor: 'white' }}
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={isRefundableFee} onChange={(e) => setIsRefundableFee(e.target.checked)} size="small" />}
+                    label={<Typography variant="body2">Refundable Service Fee</Typography>}
+                    sx={{ ml: 0, mt: -0.5 }}
+                  />
+                </Box>
+
+                <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <TextField 
+                    fullWidth label="Consultation Fee" 
+                    variant="outlined" size="small" type="number"
+                    value={clinicFee} onChange={(e) => setClinicFee(e.target.value)}
+                    sx={{ bgcolor: 'white' }}
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={isRefundableClinicFee} onChange={(e) => setIsRefundableClinicFee(e.target.checked)} size="small" />}
+                    label={<Typography variant="body2">Refundable Consultation Fee</Typography>}
+                    sx={{ ml: 0, mt: -0.5 }}
+                  />
+                </Box>
+
                 <TextField 
-                  fullWidth label="Service Fee" 
-                  variant="outlined" size="small" type="number"
-                  value={serviceFee} onChange={(e) => setServiceFee(e.target.value)}
-                  sx={{ bgcolor: 'white' }}
+                  fullWidth label="Paid Amount (Ks)" 
+                  variant="outlined" size="medium" type="number"
+                  value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)}
+                  sx={{ mb: 3, bgcolor: 'white' }}
+                  InputProps={{ sx: { fontSize: '1.1rem', fontWeight: 'bold' } }}
                 />
-                <FormControlLabel
-                  control={<Checkbox checked={isRefundableFee} onChange={(e) => setIsRefundableFee(e.target.checked)} size="small" />}
-                  label={<Typography variant="body2">Refundable Service Fee</Typography>}
-                  sx={{ ml: 0, mt: -0.5 }}
-                />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, px: 1 }}>
+                  <Typography variant="body1" color="text.secondary">Subtotal:</Typography>
+                  <Typography variant="body1" fontWeight="bold" color="text.primary">{subtotal.toLocaleString()} Ks</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 1 }}>
+                  <Typography variant="body1" color={dueAmount > 0 ? 'error.main' : 'success.main'}>
+                    {dueAmount > 0 ? 'Due:' : 'Change:'}
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold" color={dueAmount > 0 ? 'error.main' : 'success.main'}>
+                    {Math.abs(dueAmount).toLocaleString()} Ks
+                  </Typography>
+                </Box>
+
+                <Box sx={{ p: 2, bgcolor: 'primary.dark', color: 'primary.contrastText', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.1)' }}>
+                  <Typography variant="h6" fontWeight="normal">TOTAL</Typography>
+                  <Typography variant="h4" fontWeight="bold">{totalAmount.toLocaleString()} Ks</Typography>
+                </Box>
+
+                <Button 
+                  variant="contained" 
+                  color="secondary" 
+                  size="large" 
+                  fullWidth 
+                  onClick={completeSale}
+                  disabled={cart.length === 0}
+                  startIcon={<PrintIcon />}
+                  sx={{ py: 2, fontSize: '1.2rem', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(16 185 129 / 0.4)' }}
+                >
+                  Complete Sale
+                </Button>
+
               </Box>
-
-              <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <TextField 
-                  fullWidth label="Consultation Fee" 
-                  variant="outlined" size="small" type="number"
-                  value={clinicFee} onChange={(e) => setClinicFee(e.target.value)}
-                  sx={{ bgcolor: 'white' }}
-                />
-                <FormControlLabel
-                  control={<Checkbox checked={isRefundableClinicFee} onChange={(e) => setIsRefundableClinicFee(e.target.checked)} size="small" />}
-                  label={<Typography variant="body2">Refundable Consultation Fee</Typography>}
-                  sx={{ ml: 0, mt: -0.5 }}
-                />
-              </Box>
-
-              <TextField 
-                fullWidth label="Paid Amount (Ks)" 
-                variant="outlined" size="medium" type="number"
-                value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)}
-                sx={{ mb: 3, bgcolor: 'white' }}
-                InputProps={{ sx: { fontSize: '1.1rem', fontWeight: 'bold' } }}
-              />
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, px: 1 }}>
-                <Typography variant="body1" color="text.secondary">Subtotal:</Typography>
-                <Typography variant="body1" fontWeight="bold" color="text.primary">{subtotal.toLocaleString()} Ks</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, px: 1 }}>
-                <Typography variant="body1" color={dueAmount > 0 ? 'error.main' : 'success.main'}>
-                  {dueAmount > 0 ? 'Due:' : 'Change:'}
-                </Typography>
-                <Typography variant="body1" fontWeight="bold" color={dueAmount > 0 ? 'error.main' : 'success.main'}>
-                  {Math.abs(dueAmount).toLocaleString()} Ks
-                </Typography>
-              </Box>
-
-              <Box sx={{ p: 2, bgcolor: 'primary.dark', color: 'primary.contrastText', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.1)' }}>
-                <Typography variant="h6" fontWeight="normal">TOTAL</Typography>
-                <Typography variant="h4" fontWeight="bold">{totalAmount.toLocaleString()} Ks</Typography>
-              </Box>
-
-              <Button 
-                variant="contained" 
-                color="secondary" 
-                size="large" 
-                fullWidth 
-                onClick={completeSale}
-                disabled={cart.length === 0}
-                startIcon={<PrintIcon />}
-                sx={{ py: 2, fontSize: '1.2rem', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(16 185 129 / 0.4)' }}
-              >
-                Complete Sale
-              </Button>
-
             </Box>
           </Paper>
-        </Grid>
+        </Box>
 
-      </Grid>
+      </Box>
 
       {/* New Customer Dialog */}
       <Dialog open={customerModalOpen} onClose={() => setCustomerModalOpen(false)}>
