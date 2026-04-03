@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Box, Paper, Typography, TextField, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Checkbox, FormControlLabel, FormGroup } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getRoles, createRole, deleteRole } from '../api';
+import EditIcon from '@mui/icons-material/Edit';
+import { getRoles, createRole, deleteRole, updateRole } from '../api';
 import Button from '../components/LoadingButton';
 import IconButton from '../components/LoadingIconButton';
 
@@ -45,6 +46,7 @@ export default function Roles() {
   // Form state
   const [name, setName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [editRoleId, setEditRoleId] = useState(null);
 
   const fetchRoles = async () => {
     try {
@@ -69,19 +71,42 @@ export default function Roles() {
     );
   };
 
-  const handleCreate = async (e) => {
+  const handleEdit = (role) => {
+    setEditRoleId(role.id);
+    setName(role.name);
+    setSelectedPermissions(role.permissions || []);
+    setMessage('');
+    setError('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditRoleId(null);
+    setName('');
+    setSelectedPermissions([]);
+    setMessage('');
+    setError('');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
     setError('');
     try {
-      await createRole({ name, permissions: selectedPermissions });
-      setMessage('Role created successfully');
+      if (editRoleId) {
+        await updateRole(editRoleId, { name, permissions: selectedPermissions });
+        setMessage('Role updated successfully');
+      } else {
+        await createRole({ name, permissions: selectedPermissions });
+        setMessage('Role created successfully');
+      }
       setName('');
       setSelectedPermissions([]);
+      setEditRoleId(null);
       fetchRoles();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create role');
+      setError(err.response?.data?.error || `Failed to ${editRoleId ? 'update' : 'create'} role`);
     } finally {
       setSaving(false);
     }
@@ -106,11 +131,11 @@ export default function Roles() {
       <Typography variant="h4" gutterBottom>Role Management</Typography>
       
       <Paper sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>Create New Role</Typography>
+        <Typography variant="h6" gutterBottom>{editRoleId ? 'Edit Role' : 'Create New Role'}</Typography>
         {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         
-        <form onSubmit={handleCreate}>
+        <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
             label="Role Name"
@@ -119,6 +144,7 @@ export default function Roles() {
             margin="normal"
             required
             sx={{ maxWidth: 400, mb: 3 }}
+            disabled={name === 'Admin' && editRoleId}
           />
           
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -132,6 +158,7 @@ export default function Roles() {
                   <Checkbox 
                     checked={selectedPermissions.includes(perm.key)}
                     onChange={() => handlePermissionChange(perm.key)}
+                    disabled={name === 'Admin' && editRoleId}
                   />
                 }
                 label={perm.label}
@@ -139,16 +166,27 @@ export default function Roles() {
             ))}
           </FormGroup>
 
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            loading={saving}
-            disabled={saving || !name || selectedPermissions.length === 0}
-            sx={{ mt: 3 }}
-          >
-            {saving ? 'Creating...' : 'Create Role'}
-          </Button>        </form>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              loading={saving}
+              disabled={saving || !name || selectedPermissions.length === 0}
+            >
+              {saving ? (editRoleId ? 'Updating...' : 'Creating...') : (editRoleId ? 'Update Role' : 'Create Role')}
+            </Button>
+            {editRoleId && (
+              <Button
+                variant="outlined"
+                onClick={handleCancelEdit}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            )}
+          </Box>
+        </form>
       </Paper>
 
       <Typography variant="h6" gutterBottom>Existing Roles</Typography>
@@ -167,6 +205,9 @@ export default function Roles() {
                 <TableCell sx={{ fontWeight: 'bold' }}>{r.name}</TableCell>
                 <TableCell>{r.permissions?.length || 0} permissions allowed</TableCell>
                 <TableCell align="right">
+                  <IconButton onClick={() => handleEdit(r)} color="primary" title="Edit Role">
+                    <EditIcon />
+                  </IconButton>
                   <IconButton onClick={() => handleDelete(r.id)} color="error" title="Delete Role" disabled={r.name === 'Admin'}>
                     <DeleteIcon />
                   </IconButton>
