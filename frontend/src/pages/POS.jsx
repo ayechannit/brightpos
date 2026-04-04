@@ -97,10 +97,6 @@ export default function POS() {
   });
 
   const completeSale = async () => {
-    if (cart.length === 0) {
-      alert("Please select at least one item before completing the sale.");
-      return;
-    }
     
     const payload = {
       totalAmount: subtotal,
@@ -395,7 +391,6 @@ export default function POS() {
                   size="large" 
                   fullWidth 
                   onClick={completeSale}
-                  disabled={cart.length === 0}
                   startIcon={<PrintIcon />}
                   sx={{ py: 2, fontSize: '1.2rem', borderRadius: 2, boxShadow: '0 4px 6px -1px rgb(16 185 129 / 0.4)' }}
                 >
