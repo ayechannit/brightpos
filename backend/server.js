@@ -410,9 +410,7 @@ app.get('/api/sales', async (req, res) => {
 app.post('/api/sales', async (req, res) => {
   const { items, totalAmount, voucherCode, paidAmount, customerId, nonRefundableFee, refundableFee, nonRefundableClinicFee, refundableClinicFee } = req.body;
 
-  if (!items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'No items selected for sale.' });
-  }
+ 
 
   const paid = Number(paidAmount) || 0;
   const nrf = Number(nonRefundableFee) || 0;
