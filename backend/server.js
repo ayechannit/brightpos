@@ -882,6 +882,97 @@ app.get('/api/reports/sales-performance', async (req, res) => {
   }
 });
 
+app.get('/api/reports/sale-profit', async (req, res) => {
+  const { startDate, endDate, categoryId } = req.query;
+  try {
+    let saleWhereClause = { isDeleted: false };
+    if (startDate || endDate) {
+      saleWhereClause.createdAt = {};
+      if (startDate) saleWhereClause.createdAt.gte = new Date(startDate);
+      if (endDate) {
+        const d = new Date(endDate);
+        d.setHours(23, 59, 59, 999);
+        saleWhereClause.createdAt.lte = d;
+      }
+    }
+
+    let productWhereClause = { isDeleted: false };
+    if (categoryId) {
+      productWhereClause.categoryId = Number(categoryId);
+    }
+
+    // Fetch all products (filtered by category if provided) to calculate avg purchase price
+    const products = await prisma.product.findMany({
+      where: productWhereClause,
+      include: {
+        category: true,
+        PurchaseItems: {
+          where: { purchase: { isDeleted: false } },
+        },
+      },
+    });
+
+    // Calculate average purchase price for each product
+    const productData = products.reduce((acc, product) => {
+      let totalCost = 0;
+      let totalQty = 0;
+      product.PurchaseItems.forEach(pi => {
+        totalCost += pi.costPrice * pi.quantity;
+        totalQty += pi.quantity;
+      });
+      const avgPurchasePrice = totalQty > 0 ? totalCost / totalQty : 0;
+      
+      acc[product.id] = {
+        name: product.name,
+        barcode: product.barcode,
+        category: product.category?.name || 'N/A',
+        avgPurchasePrice,
+      };
+      return acc;
+    }, {});
+
+    // Fetch sale items within the date range, for the filtered products
+    const productIds = Object.keys(productData).map(Number);
+    const saleItems = await prisma.saleItem.findMany({
+      where: {
+        sale: saleWhereClause,
+        productId: { in: productIds },
+      },
+    });
+
+    // Aggregate sales data per product and calculate profit
+    const reportData = saleItems.reduce((acc, item) => {
+      const pId = item.productId;
+      if (!acc[pId]) {
+        acc[pId] = {
+          ...productData[pId],
+          totalSoldQty: 0,
+          totalRevenue: 0,
+          totalCost: 0,
+          totalProfit: 0,
+        };
+      }
+      
+      acc[pId].totalSoldQty += item.quantity;
+      acc[pId].totalRevenue += item.quantity * item.price;
+      
+      const itemCost = item.quantity * productData[pId].avgPurchasePrice;
+      acc[pId].totalCost += itemCost;
+      
+      const itemProfit = (item.quantity * item.price) - itemCost;
+      acc[pId].totalProfit += itemProfit;
+      
+      return acc;
+    }, {});
+
+    const result = Object.values(reportData).sort((a, b) => b.totalProfit - a.totalProfit);
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate sale profit report' });
+  }
+});
+
 app.get('/api/reports/customers', async (req, res) => {
   const { startDate, endDate } = req.query;
   try {

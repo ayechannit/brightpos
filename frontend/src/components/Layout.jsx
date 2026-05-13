@@ -45,6 +45,7 @@ const menuItems = [
   { text: 'Expenses', icon: <MoneyOffIcon />, path: '/expenses', permission: 'EXPENSES' },
   { text: 'Financial Report', icon: <AssessmentIcon />, path: '/reports', permission: 'REPORTS' },
   { text: 'Product Performance', icon: <LeaderboardIcon />, path: '/performance', permission: 'PERFORMANCE' },
+  { text: 'Sale Profit', icon: <PaidIcon />, path: '/sale-profit', permission: 'PERFORMANCE' }, // Reusing PERFORMANCE permission
   { text: 'Customer/Supplier Report', icon: <AssignmentIndIcon />, path: '/entity-report', permission: 'ENTITY_REPORT' },
   { text: 'Product Ledger', icon: <ListAltIcon />, path: '/product-ledger', permission: 'PRODUCT_LEDGER' },
   { text: 'AR/AP Aging Report', icon: <AccessTimeIcon />, path: '/aging-report', permission: 'AGING_REPORT' },

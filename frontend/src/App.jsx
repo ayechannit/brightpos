@@ -18,6 +18,7 @@ import PerformanceReport from './pages/PerformanceReport';
 import EntityReport from './pages/EntityReport';
 import ProductLedgerReport from './pages/ProductLedgerReport';
 import AgingReport from './pages/AgingReport';
+import SaleProfitReport from './pages/SaleProfitReport';
 import Users from './pages/Users';
 import Roles from './pages/Roles';
 import Login from './pages/Login';
@@ -63,6 +64,7 @@ function App() {
         <Route path="suppliers" element={<Suppliers />} />
         <Route path="reports" element={<FinancialReport />} />
         <Route path="performance" element={<PerformanceReport />} />
+        <Route path="sale-profit" element={<SaleProfitReport />} />
         <Route path="entity-report" element={<EntityReport />} />
         <Route path="product-ledger" element={<ProductLedgerReport />} />
         <Route path="aging-report" element={<AgingReport />} />
