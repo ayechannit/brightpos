@@ -1050,10 +1050,19 @@ app.get('/api/reports/product-ledger', async (req, res) => {
       productWhere.categoryId = Number(categoryId);
     }
 
-    const products = await prisma.product.findMany({ 
+    const products = await prisma.product.findMany({
       where: productWhere,
       include: { category: true },
-      orderBy: { name: 'asc' } 
+      orderBy: [
+        {
+          category: {
+            name: 'asc'
+          }
+        },
+        {
+          name: 'asc'
+        }
+      ]
     });
     
     // Extract filtered product IDs
