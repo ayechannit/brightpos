@@ -89,13 +89,28 @@ model Sale {
 }
 
 model SaleItem {
-  id        Int     @id @default(autoincrement())
-  saleId    Int
-  productId Int
-  quantity  Int
-  price     Float   // Price at the time of sale
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  id              Int       @id @default(autoincrement())
+  saleId          Int
+  productId       Int
+  quantity        Int
+  price           Float     // Price at the time of sale
+  doctorId        Int?
+  doctorFee       Float     @default(0)
+  doctorFeePaid   Boolean   @default(false)
+  doctorFeePaidAt DateTime?
+  sale            Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id])
+  doctor          Doctor?   @relation(fields: [doctorId], references: [id])
+}
+
+model Doctor {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  phone     String?
+  isDeleted Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  SaleItems SaleItem[]
 }
 
 model Purchase {

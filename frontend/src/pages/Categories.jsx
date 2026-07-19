@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Paper, Typography, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { useOutletContext } from 'react-router-dom';
@@ -11,16 +11,20 @@ export default function Categories() {
   const { user } = useOutletContext();
   const canDelete = user?.role?.permissions?.includes('DELETE_CATEGORY');
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({ name: '' });
 
   const fetchCategories = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/categories');
       setCategories(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,25 +86,37 @@ export default function Categories() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleOpen(category)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  {canDelete && (
-                    <IconButton onClick={() => handleDelete(category.id)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={2} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
-            {categories.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={2} align="center">No categories found</TableCell>
-              </TableRow>
+            ) : (
+              <>
+                {categories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleOpen(category)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      {canDelete && (
+                        <IconButton onClick={() => handleDelete(category.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {categories.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center">No categories found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

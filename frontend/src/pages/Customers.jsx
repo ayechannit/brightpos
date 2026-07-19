@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useOutletContext } from 'react-router-dom';
@@ -11,16 +11,20 @@ export default function Customers() {
   const { user } = useOutletContext();
   const canDelete = user?.role?.permissions?.includes('DELETE_CUSTOMER');
   const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
   const [editId, setEditId] = useState(null);
 
   const fetchCustomers = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/customers').catch(() => ({ data: [] }));
       setCustomers(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,27 +92,39 @@ export default function Customers() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {customers.map((customer) => (
-              <TableRow key={customer.id}>
-                <TableCell>{customer.name}</TableCell>
-                <TableCell>{customer.phone}</TableCell>
-                <TableCell>{customer.address}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleOpen(customer)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  {canDelete && (
-                    <IconButton onClick={() => handleDelete(customer.id)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
-            {customers.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} align="center">No customers found</TableCell>
-              </TableRow>
+            ) : (
+              <>
+                {customers.map((customer) => (
+                  <TableRow key={customer.id}>
+                    <TableCell>{customer.name}</TableCell>
+                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>{customer.address}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleOpen(customer)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      {canDelete && (
+                        <IconButton onClick={() => handleDelete(customer.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {customers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No customers found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

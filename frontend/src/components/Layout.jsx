@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, useTheme, useMediaQuery, Menu, MenuItem } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Typography, useTheme, useMediaQuery, Menu, MenuItem, LinearProgress } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -24,6 +24,7 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import Button from './LoadingButton';
 import IconButton from './LoadingIconButton';
 
@@ -36,6 +37,7 @@ const menuItems = [
   { text: 'Roles', icon: <AdminPanelSettingsIcon />, path: '/roles', permission: 'ROLES' },
   { text: 'Customers', icon: <PeopleIcon />, path: '/customers', permission: 'CUSTOMERS' },
   { text: 'Suppliers', icon: <LocalShippingIcon />, path: '/suppliers', permission: 'SUPPLIERS' },
+  { text: 'Doctors', icon: <LocalHospitalIcon />, path: '/doctors', permission: 'DOCTORS' },
   { text: 'Sales History', icon: <ReceiptLongIcon />, path: '/sales', permission: 'SALES' },
   { text: 'Purchases (Restock)', icon: <ShoppingCartIcon />, path: '/purchases', permission: 'PURCHASES' },
   { text: 'Categories', icon: <LocalOfferIcon />, path: '/categories', permission: 'CATEGORIES' },
@@ -47,6 +49,7 @@ const menuItems = [
   { text: 'Product Performance', icon: <LeaderboardIcon />, path: '/performance', permission: 'PERFORMANCE' },
   { text: 'Sale Profit', icon: <PaidIcon />, path: '/sale-profit', permission: 'PERFORMANCE' }, // Reusing PERFORMANCE permission
   { text: 'Customer/Supplier Report', icon: <AssignmentIndIcon />, path: '/entity-report', permission: 'ENTITY_REPORT' },
+  { text: 'Doctor Fees Report', icon: <AssessmentIcon />, path: '/doctor-report', permission: 'DOCTOR_REPORT' },
   { text: 'Product Ledger', icon: <ListAltIcon />, path: '/product-ledger', permission: 'PRODUCT_LEDGER' },
   { text: 'AR/AP Aging Report', icon: <AccessTimeIcon />, path: '/aging-report', permission: 'AGING_REPORT' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings', permission: 'SETTINGS' },
@@ -59,6 +62,17 @@ export default function Layout({ onLogout, user }) {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [apiLoading, setApiLoading] = useState(false);
+
+  useEffect(() => {
+    const handleApiLoading = (e) => {
+      setApiLoading(e.detail);
+    };
+    window.addEventListener('api-loading', handleApiLoading);
+    return () => {
+      window.removeEventListener('api-loading', handleApiLoading);
+    };
+  }, []);
 
   const userPermissions = user?.role?.permissions || [];
   const visibleMenuItems = menuItems.filter(item => userPermissions.includes(item.permission));
@@ -140,6 +154,19 @@ export default function Layout({ onLogout, user }) {
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {apiLoading && (
+        <LinearProgress 
+          color="primary" 
+          sx={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            zIndex: 1500, 
+            height: 4 
+          }} 
+        />
+      )}
       <AppBar 
         position="fixed" 
         sx={{ 

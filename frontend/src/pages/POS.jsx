@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, Grid, Paper, Typography, TextField, List, ListItem, ListItemText, Divider, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardActionArea, InputAdornment, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Grid, Paper, Typography, TextField, List, ListItem, ListItemText, Divider, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Card, CardActionArea, InputAdornment, Checkbox, FormControlLabel, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -13,6 +13,7 @@ import IconButton from '../components/LoadingIconButton';
 export default function POS() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [cart, setCart] = useState([]);
   const [search, setSearch] = useState('');
   const [settings, setSettings] = useState({ 
@@ -22,6 +23,7 @@ export default function POS() {
     printerWidth: 80, 
     printerHeight: null 
   });
+  const [loading, setLoading] = useState(true);
   const printRef = useRef(null);
 
   const [voucherCode, setVoucherCode] = useState('');
@@ -37,18 +39,23 @@ export default function POS() {
   const [newCustomer, setNewCustomer] = useState({ name: '', phone: '', address: '' });
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const [prodRes, custRes, setRes] = await Promise.all([
+      const [prodRes, custRes, docRes, setRes] = await Promise.all([
         api.get('/products').catch(() => ({ data: [] })),
         api.get('/customers').catch(() => ({ data: [] })),
+        api.get('/doctors').catch(() => ({ data: [] })),
         api.get('/settings').catch(() => ({ data: {} }))
       ]);
       setProducts(prodRes.data);
       setCustomers(custRes.data);
+      setDoctors(docRes.data);
       setSettings(prev => ({ ...prev, ...setRes.data }));
       setVoucherCode(`INV-${Date.now()}`); 
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +69,7 @@ export default function POS() {
       if (existing) {
         return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
       }
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, qty: 1, doctorId: null, doctorFee: 0 }];
     });
   };
 
@@ -74,6 +81,15 @@ export default function POS() {
     const val = newQty === '' ? '' : parseInt(newQty, 10);
     if (val !== '' && val < 1) return;
     setCart(cart.map(item => item.id === id ? { ...item, qty: val } : item));
+  };
+
+  const updateCartDoctor = (id, doctorId) => {
+    setCart(cart.map(item => item.id === id ? { ...item, doctorId: doctorId ? Number(doctorId) : null } : item));
+  };
+
+  const updateCartDoctorFee = (id, fee) => {
+    const val = fee === '' ? '' : Number(fee);
+    setCart(cart.map(item => item.id === id ? { ...item, doctorFee: val } : item));
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * (Number(item.qty) || 0)), 0);
@@ -107,7 +123,13 @@ export default function POS() {
       voucherCode,
       customerId: selectedCustomer?.id || null,
       paidAmount: Number(paidAmount) || 0,
-      items: cart.map(c => ({ productId: c.id, quantity: Number(c.qty) || 1, price: c.price }))
+      items: cart.map(c => ({ 
+        productId: c.id, 
+        quantity: Number(c.qty) || 1, 
+        price: c.price,
+        doctorId: c.doctorId || null,
+        doctorFee: Number(c.doctorFee) || 0
+      }))
     };
 
     try {
@@ -139,6 +161,8 @@ export default function POS() {
   };
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode && p.barcode.includes(search)));
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
 
   return (
     <Box sx={{ flexGrow: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -288,6 +312,30 @@ export default function POS() {
                             sx={{ width: '70px', '& .MuiInputBase-input': { p: 0.5, textAlign: 'center', fontSize: '0.875rem' } }}
                           />
                         </Box>
+                        {item.category?.name?.toLowerCase() === 'ultrasound' && (
+                          <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap', width: '100%' }}>
+                            <Autocomplete
+                              size="small"
+                              options={doctors}
+                              getOptionLabel={(option) => option.name}
+                              value={doctors.find(d => d.id === item.doctorId) || null}
+                              onChange={(e, newValue) => updateCartDoctor(item.id, newValue ? newValue.id : null)}
+                              renderInput={(params) => <TextField {...params} label="Doctor" size="small" />}
+                              sx={{ flexGrow: 1, minWidth: '130px', '& .MuiInputBase-root': { py: '2px', fontSize: '0.75rem' }, '& .MuiInputLabel-root': { fontSize: '0.75rem' } }}
+                            />
+                            <TextField
+                              label="Dr Fee"
+                              type="number"
+                              size="small"
+                              value={item.doctorFee || ''}
+                              onChange={(e) => updateCartDoctorFee(item.id, e.target.value)}
+                              InputProps={{
+                                endAdornment: <InputAdornment position="end" sx={{ '& .MuiTypography-root': { fontSize: '0.75rem' } }}>Ks</InputAdornment>,
+                              }}
+                              sx={{ width: '125px', '& .MuiInputBase-input': { p: '6.5px', fontSize: '0.85rem' }, '& .MuiInputLabel-root': { fontSize: '0.85rem' } }}
+                            />
+                          </Box>
+                        )}
                       </Box>
                       
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 }, flexShrink: 0 }}>

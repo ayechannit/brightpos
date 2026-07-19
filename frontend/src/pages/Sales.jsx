@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Collapse, TextField, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Collapse, TextField, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Chip, TableContainer, CircularProgress } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -9,7 +9,7 @@ import api from '../api';
 import Button from '../components/LoadingButton';
 import IconButton from '../components/LoadingIconButton';
 
-function Row({ sale, onDelete, onPay, canDelete }) {
+function Row({ sale, onDelete, onPay, onPayDoctor, canDelete }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -55,6 +55,9 @@ function Row({ sale, onDelete, onPay, canDelete }) {
                 <TableHead>
                   <TableRow>
                     <TableCell>Product</TableCell>
+                    <TableCell>Doctor</TableCell>
+                    <TableCell>Dr Fee</TableCell>
+                    <TableCell>Payout Status</TableCell>
                     <TableCell>Price</TableCell>
                     <TableCell>Qty</TableCell>
                     <TableCell align="right">Total</TableCell>
@@ -64,6 +67,31 @@ function Row({ sale, onDelete, onPay, canDelete }) {
                   {sale.items?.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.product?.name}</TableCell>
+                      <TableCell>
+                        {item.product?.category?.name?.toLowerCase() === 'ultrasound' ? (item.doctor?.name || '-') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {item.product?.category?.name?.toLowerCase() === 'ultrasound' && item.doctorFee ? `${item.doctorFee.toLocaleString()} Ks` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {item.product?.category?.name?.toLowerCase() === 'ultrasound' && item.doctorId && item.doctorFee > 0 ? (
+                          item.doctorFeePaid ? (
+                            <Chip label="Paid" color="success" size="small" variant="outlined" />
+                          ) : (
+                            <Button 
+                              variant="contained" 
+                              color="success" 
+                              size="small" 
+                              onClick={() => onPayDoctor(item.id)}
+                              sx={{ py: 0.25, fontSize: '0.75rem', minWidth: '80px' }}
+                            >
+                              Pay Doctor
+                            </Button>
+                          )
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                       <TableCell>{item.price.toLocaleString()}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell align="right">{(item.price * item.quantity).toLocaleString()}</TableCell>
@@ -106,6 +134,7 @@ export default function Sales() {
   const [sales, setSales] = useState([]);
   const [filters, setFilters] = useState({ startDate: '', endDate: '', voucherCode: '' });
   const [tabValue, setTabValue] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   // Payment Modal State
   const [payModalOpen, setPayModalOpen] = useState(false);
@@ -113,6 +142,7 @@ export default function Sales() {
   const [payAmount, setPayAmount] = useState('');
 
   const fetchSales = async () => {
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filters.startDate) params.append('startDate', filters.startDate);
@@ -123,6 +153,8 @@ export default function Sales() {
       setSales(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,9 +171,16 @@ export default function Sales() {
   };
 
   const handleClearFilters = async () => {
-    setFilters({ startDate: '', endDate: '', voucherCode: '' });
-    const res = await api.get('/sales');
-    setSales(res.data || []);
+    setLoading(true);
+    try {
+      setFilters({ startDate: '', endDate: '', voucherCode: '' });
+      const res = await api.get('/sales');
+      setSales(res.data || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -151,7 +190,8 @@ export default function Sales() {
         fetchSales();
       } catch (error) {
         console.error("Failed to delete", error);
-        alert("Failed to delete sale.");
+        const errMsg = error.response?.data?.error || "Failed to delete sale.";
+        alert(errMsg);
       }
     }
   };
@@ -189,6 +229,18 @@ export default function Sales() {
     if (tabValue === 2) return s.dueAmount > 0;   // Unpaid
     return true; // All
   });
+
+  const handlePayDoctor = async (itemId) => {
+    if (window.confirm("Are you sure you want to mark this doctor fee as paid? This will automatically log a payout transaction in your cashbook.")) {
+      try {
+        await api.put(`/sales/items/${itemId}/pay-doctor`);
+        fetchSales(); // Refresh list
+      } catch (error) {
+        console.error(error);
+        alert(error.response?.data?.error || "Failed to process doctor payout");
+      }
+    }
+  };
 
   return (
     <Box>
@@ -238,13 +290,25 @@ export default function Sales() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredSales.map((sale) => (
-              <Row key={sale.id} sale={sale} onDelete={handleDelete} onPay={handleOpenPay} canDelete={canDelete} />
-            ))}
-            {filteredSales.length === 0 && (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={9} align="center">No sales found</TableCell>
+                <TableCell colSpan={9} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
+                </TableCell>
               </TableRow>
+            ) : (
+              <>
+                {filteredSales.map((sale) => (
+                  <Row key={sale.id} sale={sale} onDelete={handleDelete} onPay={handleOpenPay} onPayDoctor={handlePayDoctor} canDelete={canDelete} />
+                ))}
+                {filteredSales.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} align="center">No sales found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid , TableContainer } from '@mui/material';
+import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid , TableContainer, CircularProgress } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import api from '../api';
 
 export default function Inventory() {
   const [products, setProducts] = useState([]);
   const [expiringItems, setExpiringItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const pRes = await api.get('/products').catch(() => ({ data: [] }));
       setProducts(pRes.data);
@@ -16,6 +18,8 @@ export default function Inventory() {
       setExpiringItems(eRes.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,17 +49,29 @@ export default function Inventory() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {expiringItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>{new Date(item.expiryDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{item.stock}</TableCell>
-                    </TableRow>
-                  ))}
-                  {expiringItems.length === 0 && (
+                  {loading ? (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">No items expiring soon.</TableCell>
+                      <TableCell colSpan={3} align="center">
+                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                          <CircularProgress size={30} />
+                        </Box>
+                      </TableCell>
                     </TableRow>
+                  ) : (
+                    <>
+                      {expiringItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{new Date(item.expiryDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{item.stock}</TableCell>
+                        </TableRow>
+                      ))}
+                      {expiringItems.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center">No items expiring soon.</TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   )}
                 </TableBody>
               </Table>
@@ -77,24 +93,36 @@ export default function Inventory() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>{product.category?.name || 'None'}</TableCell>
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>
-                      {product.stock <= 5 ? (
-                        <Typography color="error" variant="body2" fontWeight="bold">Low Stock</Typography>
-                      ) : (
-                        <Typography color="success.main" variant="body2">Normal</Typography>
-                      )}
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                        <CircularProgress size={30} />
+                      </Box>
                     </TableCell>
                   </TableRow>
-                ))}
-                {products.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">No products in inventory.</TableCell>
-                  </TableRow>
+                ) : (
+                  <>
+                    {products.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>{product.name}</TableCell>
+                        <TableCell>{product.category?.name || 'None'}</TableCell>
+                        <TableCell>{product.stock}</TableCell>
+                        <TableCell>
+                          {product.stock <= 5 ? (
+                            <Typography color="error" variant="body2" fontWeight="bold">Low Stock</Typography>
+                          ) : (
+                            <Typography color="success.main" variant="body2">Normal</Typography>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {products.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">No products in inventory.</TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 )}
               </TableBody>
             </Table>

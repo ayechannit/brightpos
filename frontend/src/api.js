@@ -4,9 +4,22 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
+let activeRequests = 0;
+
+function updateLoadingState(loading) {
+  if (loading) {
+    activeRequests++;
+  } else {
+    activeRequests = Math.max(0, activeRequests - 1);
+  }
+  const isApiLoading = activeRequests > 0;
+  window.dispatchEvent(new CustomEvent('api-loading', { detail: isApiLoading }));
+}
+
 // Add a request interceptor to include the JWT token
 api.interceptors.request.use(
   (config) => {
+    updateLoadingState(true);
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const user = JSON.parse(storedUser);
@@ -17,14 +30,19 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    updateLoadingState(false);
     return Promise.reject(error);
   }
 );
 
 // Add a response interceptor to handle token expiration
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    updateLoadingState(false);
+    return response;
+  },
   (error) => {
+    updateLoadingState(false);
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       localStorage.removeItem('user');
       if (window.location.pathname !== '/') {
@@ -72,6 +90,12 @@ export const getCustomers = async () => (await api.get('/customers')).data;
 export const createCustomer = async (data) => (await api.post('/customers', data)).data;
 export const updateCustomer = async (id, data) => (await api.put(`/customers/${id}`, data)).data;
 
+// --- Doctors ---
+export const getDoctors = async () => (await api.get('/doctors')).data;
+export const createDoctor = async (data) => (await api.post('/doctors', data)).data;
+export const updateDoctor = async (id, data) => (await api.put(`/doctors/${id}`, data)).data;
+export const deleteDoctor = async (id) => (await api.delete(`/doctors/${id}`)).data;
+
 // --- Suppliers ---
 export const getSuppliers = async () => (await api.get('/suppliers')).data;
 export const createSupplier = async (data) => (await api.post('/suppliers', data)).data;
@@ -81,6 +105,7 @@ export const updateSupplier = async (id, data) => (await api.put(`/suppliers/${i
 export const getSales = async (filters) => (await api.get('/sales', { params: filters })).data;
 export const createSale = async (data) => (await api.post('/sales', data)).data;
 export const deleteSale = async (id) => (await api.delete(`/sales/${id}`)).data;
+export const payDoctorFee = async (id) => (await api.put(`/sales/items/${id}/pay-doctor`)).data;
 
 // --- Purchases ---
 export const getPurchases = async (filters) => (await api.get('/purchases', { params: filters })).data;
@@ -103,6 +128,7 @@ export const getCustomerReport = async (filters) => (await api.get('/reports/cus
 export const getSupplierReport = async (filters) => (await api.get('/reports/suppliers', { params: filters })).data;
 export const getProductLedgerReport = async (filters) => (await api.get('/reports/product-ledger', { params: filters })).data;
 export const getAgingReport = async () => (await api.get('/reports/aging')).data;
+export const getDoctorReport = async (filters) => (await api.get('/reports/doctors', { params: filters })).data;
 
 // --- Settings ---
 export const getSettings = async () => (await api.get('/settings')).data;

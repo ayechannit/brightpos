@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Grid, Card, CardContent } from '@mui/material';
+import { Box, Typography, Paper, Grid, Card, CardContent, CircularProgress } from '@mui/material';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -7,8 +7,10 @@ import api from '../api';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ productCount: 0, salesCountToday: 0, revenueToday: 0 });
+  const [loading, setLoading] = useState(true);
 
   const fetchStats = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/dashboard/stats').catch(() => ({ 
         data: { productCount: 0, salesCountToday: 0, revenueToday: 0 } 
@@ -16,12 +18,16 @@ export default function Dashboard() {
       setStats(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchStats();
   }, []);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}><CircularProgress /></Box>;
 
   const StatCard = ({ title, value, icon, color }) => (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

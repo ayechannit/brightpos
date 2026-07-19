@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useOutletContext } from 'react-router-dom';
@@ -14,13 +14,17 @@ export default function Suppliers() {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', phone: '', address: '' });
   const [editId, setEditId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchSuppliers = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/suppliers').catch(() => ({ data: [] }));
       setSuppliers(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -88,27 +92,39 @@ export default function Suppliers() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {suppliers.map((supplier) => (
-              <TableRow key={supplier.id}>
-                <TableCell>{supplier.name}</TableCell>
-                <TableCell>{supplier.phone}</TableCell>
-                <TableCell>{supplier.address}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleOpen(supplier)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  {canDelete && (
-                    <IconButton onClick={() => handleDelete(supplier.id)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
-            {suppliers.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} align="center">No suppliers found</TableCell>
-              </TableRow>
+            ) : (
+              <>
+                {suppliers.map((supplier) => (
+                  <TableRow key={supplier.id}>
+                    <TableCell>{supplier.name}</TableCell>
+                    <TableCell>{supplier.phone}</TableCell>
+                    <TableCell>{supplier.address}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleOpen(supplier)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      {canDelete && (
+                        <IconButton onClick={() => handleDelete(supplier.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {suppliers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No suppliers found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
-import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Chip , TableContainer } from '@mui/material';
+import {  Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Chip , TableContainer, CircularProgress } from '@mui/material';
 import api from '../api';
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/transactions').catch(() => ({ data: [] }));
+      setTransactions(res.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const res = await api.get('/transactions').catch(() => ({ data: [] }));
-        setTransactions(res.data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchTransactions();
   }, []);
 
@@ -39,24 +44,36 @@ export default function Transactions() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {transactions.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell>{new Date(t.createdAt).toLocaleString()}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={t.type} 
-                    color={t.type === 'SALE' ? 'success' : 'warning'} 
-                    size="small" 
-                  />
-                </TableCell>
-                <TableCell>{getEntityName(t)}</TableCell>
-                <TableCell align="right">{t.amount.toLocaleString()} Ks</TableCell>
-              </TableRow>
-            ))}
-            {transactions.length === 0 && (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">No transactions found</TableCell>
+                <TableCell colSpan={4} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
+                </TableCell>
               </TableRow>
+            ) : (
+              <>
+                {transactions.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell>{new Date(t.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={t.type} 
+                        color={t.type === 'SALE' ? 'success' : 'warning'} 
+                        size="small" 
+                      />
+                    </TableCell>
+                    <TableCell>{getEntityName(t)}</TableCell>
+                    <TableCell align="right">{t.amount.toLocaleString()} Ks</TableCell>
+                  </TableRow>
+                ))}
+                {transactions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No transactions found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, TableContainer, CircularProgress } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useOutletContext } from 'react-router-dom';
@@ -16,8 +16,10 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ name: '', barcode: '', price: '', stock: '', categoryId: '' });
   const [filterCategory, setFilterCategory] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       let url = '/products';
       if (filterCategory) {
@@ -31,6 +33,8 @@ export default function Products() {
       setCategories(catRes.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,29 +130,41 @@ export default function Products() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.category?.name || 'None'}</TableCell>
-                <TableCell>{product.barcode}</TableCell>
-                <TableCell>{product.price.toLocaleString()}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleOpen(product)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  {canDelete && (
-                    <IconButton onClick={() => handleDelete(product.id)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
-            {products.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} align="center">No products found</TableCell>
-              </TableRow>
+            ) : (
+              <>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>{product.category?.name || 'None'}</TableCell>
+                    <TableCell>{product.barcode}</TableCell>
+                    <TableCell>{product.price.toLocaleString()}</TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleOpen(product)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      {canDelete && (
+                        <IconButton onClick={() => handleDelete(product.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {products.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">No products found</TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

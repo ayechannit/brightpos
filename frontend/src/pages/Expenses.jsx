@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, TableContainer, CircularProgress } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { useOutletContext } from 'react-router-dom';
@@ -11,17 +11,21 @@ export default function Expenses() {
   const { user } = useOutletContext();
   const canDelete = user?.role?.permissions?.includes('DELETE_EXPENSE');
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [editId, setEditId] = useState(null);
 
   const fetchExpenses = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/expenses').catch(() => ({ data: [] }));
       setExpenses(res.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,28 +98,40 @@ export default function Expenses() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {expenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>{expense.description}</TableCell>
-                <TableCell>{expense.amount.toLocaleString()}</TableCell>
-                <TableCell align="right">
-                  <IconButton onClick={() => handleEdit(expense)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  {canDelete && (
-                    <IconButton onClick={() => handleDelete(expense.id)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-            {expenses.length === 0 && (
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={3} align="center">
-                  No expenses recorded.
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
                 </TableCell>
               </TableRow>
+            ) : (
+              <>
+                {expenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{expense.description}</TableCell>
+                    <TableCell>{expense.amount.toLocaleString()}</TableCell>
+                    <TableCell align="right">
+                      <IconButton onClick={() => handleEdit(expense)} color="primary">
+                        <EditIcon />
+                      </IconButton>
+                      {canDelete && (
+                        <IconButton onClick={() => handleDelete(expense.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {expenses.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center">
+                      No expenses recorded.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>

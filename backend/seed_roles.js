@@ -12,7 +12,10 @@ async function seed() {
     'DASHBOARD', 'POS', 'USERS', 'ROLES', 'CUSTOMERS', 'SUPPLIERS', 
     'SALES', 'PURCHASES', 'CATEGORIES', 'PRODUCTS', 'INVENTORY', 
     'TRANSACTIONS', 'EXPENSES', 'REPORTS', 'PERFORMANCE', 
-    'ENTITY_REPORT', 'PRODUCT_LEDGER', 'AGING_REPORT', 'SETTINGS'
+    'ENTITY_REPORT', 'PRODUCT_LEDGER', 'AGING_REPORT', 'SETTINGS',
+    'DOCTORS', 'DOCTOR_REPORT',
+    'DELETE_USER', 'DELETE_CUSTOMER', 'DELETE_SUPPLIER', 'DELETE_SALE', 
+    'DELETE_PURCHASE', 'DELETE_CATEGORY', 'DELETE_PRODUCT', 'DELETE_EXPENSE'
   ];
   
   try {
@@ -22,6 +25,13 @@ async function seed() {
         data: { name: 'Admin', permissions: allPermissions }
       });
       console.log('Created Default Admin Role');
+    } else {
+      // Keep Admin permissions up to date with new modules
+      adminRole = await prisma.role.update({
+        where: { id: adminRole.id },
+        data: { permissions: allPermissions }
+      });
+      console.log('Updated Admin Role permissions with new modules');
     }
 
     const updated = await prisma.user.updateMany({

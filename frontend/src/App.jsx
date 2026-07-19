@@ -14,8 +14,10 @@ import Settings from './pages/Settings';
 import Transactions from './pages/Transactions';
 import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers';
+import Doctors from './pages/Doctors';
 import PerformanceReport from './pages/PerformanceReport';
 import EntityReport from './pages/EntityReport';
+import DoctorReport from './pages/DoctorReport';
 import ProductLedgerReport from './pages/ProductLedgerReport';
 import AgingReport from './pages/AgingReport';
 import SaleProfitReport from './pages/SaleProfitReport';
@@ -62,10 +64,12 @@ function App() {
         <Route path="expenses" element={<Expenses />} />
         <Route path="customers" element={<Customers />} />
         <Route path="suppliers" element={<Suppliers />} />
+        <Route path="doctors" element={<Doctors />} />
         <Route path="reports" element={<FinancialReport />} />
         <Route path="performance" element={<PerformanceReport />} />
         <Route path="sale-profit" element={<SaleProfitReport />} />
         <Route path="entity-report" element={<EntityReport />} />
+        <Route path="doctor-report" element={<DoctorReport />} />
         <Route path="product-ledger" element={<ProductLedgerReport />} />
         <Route path="aging-report" element={<AgingReport />} />
         <Route path="transactions" element={<Transactions />} />

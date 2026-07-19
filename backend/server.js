@@ -373,6 +373,56 @@ app.delete('/api/suppliers/:id', async (req, res) => {
   }
 });
 
+// --- Doctors ---
+app.get('/api/doctors', async (req, res) => {
+  try {
+    const doctors = await prisma.doctor.findMany({ 
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' } 
+    });
+    res.json(doctors);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch doctors' });
+  }
+});
+
+app.post('/api/doctors', async (req, res) => {
+  const { name, phone } = req.body;
+  try {
+    const doctor = await prisma.doctor.create({ data: { name, phone } });
+    res.json(doctor);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create doctor' });
+  }
+});
+
+app.put('/api/doctors/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, phone } = req.body;
+  try {
+    const doctor = await prisma.doctor.update({
+      where: { id: Number(id) },
+      data: { name, phone }
+    });
+    res.json(doctor);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update doctor' });
+  }
+});
+
+app.delete('/api/doctors/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.doctor.update({ 
+      where: { id: Number(id) },
+      data: { isDeleted: true }
+    });
+    res.json({ message: 'Doctor deleted' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete doctor' });
+  }
+});
+
 // --- Sales ---
 app.get('/api/sales', async (req, res) => {
   const { startDate, endDate, voucherCode } = req.query;
@@ -394,7 +444,7 @@ app.get('/api/sales', async (req, res) => {
     const sales = await prisma.sale.findMany({
       where,
       include: { 
-        items: { include: { product: true } },
+        items: { include: { product: { include: { category: true } }, doctor: true } },
         transactions: true,
         customer: true
       },
@@ -437,7 +487,9 @@ app.post('/api/sales', async (req, res) => {
             create: items.map(item => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price
+              price: item.price,
+              doctorId: item.doctorId ? Number(item.doctorId) : null,
+              doctorFee: item.doctorFee ? Number(item.doctorFee) : 0
             }))
           }
         }
@@ -486,7 +538,8 @@ app.delete('/api/sales/:id', async (req, res) => {
     await prisma.sale.update({ where: { id: Number(id) }, data: { isDeleted: true } });
     res.json({ message: 'Sale deleted (Soft)' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed' });
+    console.error("Error deleting sale:", error);
+    res.status(400).json({ error: error.message || 'Failed to delete sale' });
   }
 });
 
@@ -1161,6 +1214,131 @@ app.get('/api/reports/aging', async (req, res) => {
   } catch(error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to generate aging report' });
+  }
+});
+
+app.get('/api/reports/doctors', async (req, res) => {
+  const { startDate, endDate } = req.query;
+  try {
+    const doctors = await prisma.doctor.findMany({
+      where: { isDeleted: false },
+      orderBy: { name: 'asc' }
+    });
+
+    let saleItemWhere = {
+      sale: {
+        isDeleted: false
+      }
+    };
+
+    if (startDate || endDate) {
+      saleItemWhere.sale.createdAt = {};
+      if (startDate) saleItemWhere.sale.createdAt.gte = new Date(startDate);
+      if (endDate) {
+        const d = new Date(endDate);
+        d.setHours(23, 59, 59, 999);
+        saleItemWhere.sale.createdAt.lte = d;
+      }
+    }
+
+    const reportData = await Promise.all(doctors.map(async (doc) => {
+      const itemsAggregate = await prisma.saleItem.aggregate({
+        where: {
+          doctorId: doc.id,
+          ...saleItemWhere
+        },
+        _sum: {
+          doctorFee: true,
+          quantity: true
+        }
+      });
+
+      const unpaidAggregate = await prisma.saleItem.aggregate({
+        where: {
+          doctorId: doc.id,
+          doctorFeePaid: false,
+          ...saleItemWhere
+        },
+        _sum: {
+          doctorFee: true
+        }
+      });
+
+      const paidAggregate = await prisma.saleItem.aggregate({
+        where: {
+          doctorId: doc.id,
+          doctorFeePaid: true,
+          ...saleItemWhere
+        },
+        _sum: {
+          doctorFee: true
+        }
+      });
+
+      return {
+        id: doc.id,
+        name: doc.name,
+        phone: doc.phone,
+        totalItems: itemsAggregate._sum.quantity || 0,
+        totalFees: itemsAggregate._sum.doctorFee || 0,
+        unpaidFees: unpaidAggregate._sum.doctorFee || 0,
+        paidFees: paidAggregate._sum.doctorFee || 0
+      };
+    }));
+
+    res.json(reportData);
+  } catch (error) {
+    console.error("Error generating doctor report:", error);
+    res.status(500).json({ error: 'Failed to generate doctor report', details: error.message });
+  }
+});
+
+app.put('/api/sales/items/:id/pay-doctor', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const item = await prisma.saleItem.findUnique({
+      where: { id: Number(id) },
+      include: { doctor: true, sale: true }
+    });
+
+    if (!item) {
+      return res.status(404).json({ error: 'Sale item not found' });
+    }
+
+    if (!item.doctorId || item.doctorFee <= 0) {
+      return res.status(400).json({ error: 'This item does not have a doctor fee assigned' });
+    }
+
+    if (item.doctorFeePaid) {
+      return res.status(400).json({ error: 'Doctor fee has already been paid for this item' });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedItem = await tx.saleItem.update({
+        where: { id: Number(id) },
+        data: {
+          doctorFeePaid: true,
+          doctorFeePaidAt: new Date()
+        }
+      });
+
+      await tx.transaction.create({
+        data: {
+          type: 'CREDIT',
+          category: 'PAYMENT_MADE',
+          amount: item.doctorFee,
+          description: `Doctor Fee Payout to ${item.doctor.name} (Voucher #${item.sale.voucherCode || item.sale.id})`,
+          saleId: item.saleId
+        }
+      });
+
+      return updatedItem;
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Payout error:", error);
+    res.status(500).json({ error: 'Failed to process doctor payout', details: error.message });
   }
 });
 

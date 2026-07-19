@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, Grid, Collapse, Tabs, Tab, Chip, Divider, TableContainer } from '@mui/material';
+import { Box, Paper, Typography, Table, TableBody, TableCell, TableHead, TableRow, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, Grid, Collapse, Tabs, Tab, Chip, Divider, TableContainer, CircularProgress } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -111,6 +111,7 @@ export default function Purchases() {
   const [purchases, setPurchases] = useState([]);
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState({ startDate: '', endDate: '', supplierId: '' });
   const [tabValue, setTabValue] = useState(0);
@@ -148,8 +149,9 @@ export default function Purchases() {
   };
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      fetchPurchases();
+      await fetchPurchases();
       const [prRes, supRes] = await Promise.all([
         api.get('/products').catch(() => ({ data: [] })),
         api.get('/suppliers').catch(() => ({ data: [] }))
@@ -158,6 +160,8 @@ export default function Purchases() {
       setSuppliers(supRes.data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -349,13 +353,22 @@ export default function Purchases() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredPurchases.map((purchase) => (
-              <Row key={purchase.id} purchase={purchase} onDelete={handleDelete} onPay={handleOpenPay} canDelete={canDelete} />
-            ))}
-            {filteredPurchases.length === 0 && (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={9} align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+                    <CircularProgress size={30} />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : filteredPurchases.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} align="center">No purchases found</TableCell>
               </TableRow>
+            ) : (
+              filteredPurchases.map((purchase) => (
+                <Row key={purchase.id} purchase={purchase} onDelete={handleDelete} onPay={handleOpenPay} canDelete={canDelete} />
+              ))
             )}
           </TableBody>
         </Table>
