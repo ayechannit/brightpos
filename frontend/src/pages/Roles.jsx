@@ -16,6 +16,8 @@ const AVAILABLE_PERMISSIONS = [
   { key: 'DELETE_CUSTOMER', label: 'Delete Customer' },
   { key: 'SUPPLIERS', label: 'Suppliers' },
   { key: 'DELETE_SUPPLIER', label: 'Delete Supplier' },
+  { key: 'DOCTORS', label: 'Doctors' },
+  { key: 'DOCTOR_REPORT', label: 'Doctor Fees Report' },
   { key: 'SALES', label: 'Sales History' },
   { key: 'DELETE_SALE', label: 'Delete Sale' },
   { key: 'PURCHASES', label: 'Purchases' },
@@ -33,6 +35,7 @@ const AVAILABLE_PERMISSIONS = [
   { key: 'ENTITY_REPORT', label: 'Entity Report' },
   { key: 'PRODUCT_LEDGER', label: 'Product Ledger' },
   { key: 'AGING_REPORT', label: 'Aging Report' },
+  { key: 'PAY_DOCTORS', label: 'Pay Doctors' },
   { key: 'SETTINGS', label: 'Settings' },
 ];
 

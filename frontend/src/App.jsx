@@ -15,6 +15,7 @@ import Transactions from './pages/Transactions';
 import Customers from './pages/Customers';
 import Suppliers from './pages/Suppliers';
 import Doctors from './pages/Doctors';
+import PayDoctors from './pages/PayDoctors';
 import PerformanceReport from './pages/PerformanceReport';
 import EntityReport from './pages/EntityReport';
 import DoctorReport from './pages/DoctorReport';
@@ -65,6 +66,7 @@ function App() {
         <Route path="customers" element={<Customers />} />
         <Route path="suppliers" element={<Suppliers />} />
         <Route path="doctors" element={<Doctors />} />
+        <Route path="pay-doctors" element={<PayDoctors />} />
         <Route path="reports" element={<FinancialReport />} />
         <Route path="performance" element={<PerformanceReport />} />
         <Route path="sale-profit" element={<SaleProfitReport />} />

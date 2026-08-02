@@ -25,6 +25,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import Button from './LoadingButton';
 import IconButton from './LoadingIconButton';
 
@@ -38,6 +39,7 @@ const menuItems = [
   { text: 'Customers', icon: <PeopleIcon />, path: '/customers', permission: 'CUSTOMERS' },
   { text: 'Suppliers', icon: <LocalShippingIcon />, path: '/suppliers', permission: 'SUPPLIERS' },
   { text: 'Doctors', icon: <LocalHospitalIcon />, path: '/doctors', permission: 'DOCTORS' },
+  { text: 'Pay Doctors', icon: <HealthAndSafetyIcon />, path: '/pay-doctors', permission: 'PAY_DOCTORS' },
   { text: 'Sales History', icon: <ReceiptLongIcon />, path: '/sales', permission: 'SALES' },
   { text: 'Purchases (Restock)', icon: <ShoppingCartIcon />, path: '/purchases', permission: 'PURCHASES' },
   { text: 'Categories', icon: <LocalOfferIcon />, path: '/categories', permission: 'CATEGORIES' },

@@ -843,6 +843,20 @@ app.get('/api/reports/financial', async (req, res) => {
       orderBy: { amount: 'desc' }
     });
 
+    // 6. Doctor Fees (Accrued cost, regardless of whether the payout has been made yet)
+    const doctorFeeAgg = await prisma.saleItem.aggregate({
+      where: { sale: whereClause },
+      _sum: { doctorFee: true }
+    });
+    const totalDoctorFees = doctorFeeAgg._sum.doctorFee || 0;
+
+    // 7. Unpaid Doctor Fees (Liability - what you still owe doctors)
+    const unpaidDoctorFeeAgg = await prisma.saleItem.aggregate({
+      where: { sale: whereClause, doctorFeePaid: false },
+      _sum: { doctorFee: true }
+    });
+    const unpaidDoctorFees = unpaidDoctorFeeAgg._sum.doctorFee || 0;
+
     // Revenue includes total sales amount (which has both fees)
     const revenue = salesAgg._sum.totalAmount || 0;
     const totalServiceFees = (salesAgg._sum.nonRefundableFee || 0) + (salesAgg._sum.refundableFee || 0);
@@ -850,8 +864,8 @@ app.get('/api/reports/financial', async (req, res) => {
     const productRevenue = revenue - totalServiceFees - totalClinicFees;
 
     const costOfGoods = purchaseAgg._sum.totalAmount || 0;
-    const grossProfit = revenue - costOfGoods;
-    
+    const grossProfit = revenue - costOfGoods - totalDoctorFees;
+
     const cashIn = transAgg.find(a => a.type === 'DEBIT')?._sum.amount || 0;
     const cashOut = transAgg.find(a => a.type === 'CREDIT')?._sum.amount || 0;
 
@@ -866,6 +880,7 @@ app.get('/api/reports/financial', async (req, res) => {
         nonRefundableClinicFees: salesAgg._sum.nonRefundableClinicFee || 0,
         refundableClinicFees: salesAgg._sum.refundableClinicFee || 0,
         totalPurchases: costOfGoods,
+        totalDoctorFees,
         grossProfit: grossProfit,
         totalExpenses: expenseBreakdown.reduce((sum, e) => sum + e.amount, 0),
         netProfit: grossProfit - expenseBreakdown.reduce((sum, e) => sum + e.amount, 0),
@@ -875,7 +890,9 @@ app.get('/api/reports/financial', async (req, res) => {
       },
       balanceSheet: {
         accountsReceivable: salesAgg._sum.dueAmount || 0,
-        accountsPayable: purchaseAgg._sum.dueAmount || 0,
+        accountsPayable: (purchaseAgg._sum.dueAmount || 0) + unpaidDoctorFees,
+        supplierPayable: purchaseAgg._sum.dueAmount || 0,
+        doctorFeesPayable: unpaidDoctorFees,
         inventoryValue: inventoryValue
       },
       expenseBreakdown
@@ -1008,10 +1025,11 @@ app.get('/api/reports/sale-profit', async (req, res) => {
       
       acc[pId].totalSoldQty += item.quantity;
       acc[pId].totalRevenue += item.quantity * item.price;
-      
-      const itemCost = item.quantity * productData[pId].avgPurchasePrice;
+
+      // doctorFee is a flat cost for this line item (e.g. ultrasound referral fee), not per-unit
+      const itemCost = (item.quantity * productData[pId].avgPurchasePrice) + (item.doctorFee || 0);
       acc[pId].totalCost += itemCost;
-      
+
       const itemProfit = (item.quantity * item.price) - itemCost;
       acc[pId].totalProfit += itemProfit;
       
@@ -1174,6 +1192,11 @@ app.get('/api/reports/aging', async (req, res) => {
       include: { supplier: true }
     });
 
+    const unpaidDoctorFees = await prisma.saleItem.findMany({
+      where: { doctorId: { not: null }, doctorFeePaid: false, doctorFee: { gt: 0 }, sale: { isDeleted: false } },
+      include: { doctor: true, sale: true }
+    });
+
     const now = new Date();
 
     const processAging = (records, entityKey) => {
@@ -1206,9 +1229,34 @@ app.get('/api/reports/aging', async (req, res) => {
       return Object.values(aging).sort((a, b) => b.total - a.total);
     };
 
+    const processDoctorAging = (items) => {
+      const aging = {};
+      items.forEach(item => {
+        const entityId = item.doctorId;
+        const entityName = `${item.doctor?.name || 'Unknown Doctor'} (Doctor Fee)`;
+        const daysOld = Math.floor((now - new Date(item.sale.createdAt)) / (1000 * 60 * 60 * 24));
+
+        if (!aging[entityId]) {
+          aging[entityId] = { name: entityName, current: 0, days30: 0, days60: 0, days90: 0, total: 0 };
+        }
+
+        const amount = item.doctorFee;
+        aging[entityId].total += amount;
+
+        if (daysOld <= 30) aging[entityId].current += amount;
+        else if (daysOld <= 60) aging[entityId].days30 += amount;
+        else if (daysOld <= 90) aging[entityId].days60 += amount;
+        else aging[entityId].days90 += amount;
+      });
+      return Object.values(aging);
+    };
+
+    const payables = [...processAging(unpaidPurchases, 'supplier'), ...processDoctorAging(unpaidDoctorFees)]
+      .sort((a, b) => b.total - a.total);
+
     res.json({
       receivables: processAging(unpaidSales, 'customer'),
-      payables: processAging(unpaidPurchases, 'supplier')
+      payables
     });
 
   } catch(error) {
@@ -1339,6 +1387,69 @@ app.put('/api/sales/items/:id/pay-doctor', async (req, res) => {
   } catch (error) {
     console.error("Payout error:", error);
     res.status(500).json({ error: 'Failed to process doctor payout', details: error.message });
+  }
+});
+
+// --- Doctor Payouts (dedicated "Pay Doctor" screen) ---
+app.get('/api/doctor-payouts', async (req, res) => {
+  const { doctorId, status } = req.query; // status: 'unpaid' (default), 'paid', 'all'
+  try {
+    let where = { doctorId: { not: null }, doctorFee: { gt: 0 }, sale: { isDeleted: false } };
+    if (doctorId) where.doctorId = Number(doctorId);
+    if (status === 'paid') where.doctorFeePaid = true;
+    else if (status !== 'all') where.doctorFeePaid = false;
+
+    const items = await prisma.saleItem.findMany({
+      where,
+      include: { doctor: true, product: true, sale: { include: { customer: true } } },
+      orderBy: { sale: { createdAt: 'desc' } }
+    });
+    res.json(items);
+  } catch (error) {
+    console.error("Error fetching doctor payouts:", error);
+    res.status(500).json({ error: 'Failed to fetch doctor payouts' });
+  }
+});
+
+app.post('/api/doctor-payouts/pay-all', async (req, res) => {
+  const { doctorId } = req.body;
+  if (!doctorId) return res.status(400).json({ error: 'doctorId is required' });
+
+  try {
+    const items = await prisma.saleItem.findMany({
+      where: { doctorId: Number(doctorId), doctorFeePaid: false, doctorFee: { gt: 0 }, sale: { isDeleted: false } },
+      include: { doctor: true, sale: true }
+    });
+
+    if (items.length === 0) {
+      return res.status(400).json({ error: 'No unpaid doctor fees found for this doctor' });
+    }
+
+    const paidItems = await prisma.$transaction(async (tx) => {
+      const results = [];
+      for (const item of items) {
+        const updatedItem = await tx.saleItem.update({
+          where: { id: item.id },
+          data: { doctorFeePaid: true, doctorFeePaidAt: new Date() }
+        });
+        await tx.transaction.create({
+          data: {
+            type: 'CREDIT',
+            category: 'PAYMENT_MADE',
+            amount: item.doctorFee,
+            description: `Doctor Fee Payout to ${item.doctor.name} (Voucher #${item.sale.voucherCode || item.sale.id})`,
+            saleId: item.saleId
+          }
+        });
+        results.push(updatedItem);
+      }
+      return results;
+    });
+
+    res.json({ paidCount: paidItems.length, totalPaid: items.reduce((sum, i) => sum + i.doctorFee, 0) });
+  } catch (error) {
+    console.error("Bulk payout error:", error);
+    res.status(500).json({ error: 'Failed to process bulk doctor payout', details: error.message });
   }
 });
 

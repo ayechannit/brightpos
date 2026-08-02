@@ -53,6 +53,7 @@ export default function FinancialReport() {
       ["  - Non-Refundable", report.summary.nonRefundableClinicFees],
       ["  - Refundable", report.summary.refundableClinicFees],
       ["Total Cost of Goods (Purchases)", report.summary.totalPurchases],
+      ["Doctor Fees (Accrued)", report.summary.totalDoctorFees],
       ["Gross Profit", report.summary.grossProfit],
       ["Total Expenses", report.summary.totalExpenses],
       ["Net Profit", report.summary.netProfit],
@@ -63,7 +64,9 @@ export default function FinancialReport() {
       [""],
       ["Assets & Liabilities"],
       ["Accounts Receivable (Due from Customers)", report.balanceSheet.accountsReceivable],
-      ["Accounts Payable (Due to Suppliers)", report.balanceSheet.accountsPayable],
+      ["Accounts Payable (Suppliers + Doctors)", report.balanceSheet.accountsPayable],
+      ["  - Owed to Suppliers", report.balanceSheet.supplierPayable],
+      ["  - Owed to Doctors (Unpaid Fees)", report.balanceSheet.doctorFeesPayable],
       ["Inventory Value (Stock Asset)", report.balanceSheet.inventoryValue],
     ];
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -158,14 +161,26 @@ export default function FinancialReport() {
               <Typography>Clinic Fees (Refundable)</Typography>
               <Typography fontWeight="bold" color="info.main">+{report.summary.refundableClinicFees.toLocaleString()} Ks</Typography>
             </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography>Doctor Fees (Accrued)</Typography>
+              <Typography fontWeight="bold" color="error.main">-{report.summary.totalDoctorFees.toLocaleString()} Ks</Typography>
+            </Box>
             <Divider sx={{ my: 1 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Typography>Accounts Receivable (Customers owe you)</Typography>
               <Typography fontWeight="bold" color="success.main">+{report.balanceSheet.accountsReceivable.toLocaleString()} Ks</Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography>Accounts Payable (You owe suppliers)</Typography>
+              <Typography>Accounts Payable (Suppliers + Doctors)</Typography>
               <Typography fontWeight="bold" color="error.main">-{report.balanceSheet.accountsPayable.toLocaleString()} Ks</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+              <Typography variant="body2" color="textSecondary">- Owed to Suppliers</Typography>
+              <Typography variant="body2" color="textSecondary">{report.balanceSheet.supplierPayable.toLocaleString()} Ks</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, pl: 2 }}>
+              <Typography variant="body2" color="textSecondary">- Owed to Doctors (Unpaid Fees)</Typography>
+              <Typography variant="body2" color="textSecondary">{report.balanceSheet.doctorFeesPayable.toLocaleString()} Ks</Typography>
             </Box>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

@@ -107,6 +107,10 @@ export const createSale = async (data) => (await api.post('/sales', data)).data;
 export const deleteSale = async (id) => (await api.delete(`/sales/${id}`)).data;
 export const payDoctorFee = async (id) => (await api.put(`/sales/items/${id}/pay-doctor`)).data;
 
+// --- Doctor Payouts ---
+export const getDoctorPayouts = async (filters) => (await api.get('/doctor-payouts', { params: filters })).data;
+export const payAllDoctorFees = async (doctorId) => (await api.post('/doctor-payouts/pay-all', { doctorId })).data;
+
 // --- Purchases ---
 export const getPurchases = async (filters) => (await api.get('/purchases', { params: filters })).data;
 export const createPurchase = async (data) => (await api.post('/purchases', data)).data;
