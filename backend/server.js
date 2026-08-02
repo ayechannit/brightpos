@@ -1019,18 +1019,23 @@ app.get('/api/reports/sale-profit', async (req, res) => {
           totalSoldQty: 0,
           totalRevenue: 0,
           totalCost: 0,
+          totalDoctorFee: 0,
           totalProfit: 0,
         };
       }
-      
+
       acc[pId].totalSoldQty += item.quantity;
       acc[pId].totalRevenue += item.quantity * item.price;
 
-      // doctorFee is a flat cost for this line item (e.g. ultrasound referral fee), not per-unit
-      const itemCost = (item.quantity * productData[pId].avgPurchasePrice) + (item.doctorFee || 0);
+      const itemCost = item.quantity * productData[pId].avgPurchasePrice;
       acc[pId].totalCost += itemCost;
 
-      const itemProfit = (item.quantity * item.price) - itemCost;
+      // doctorFee is a flat cost for this line item (e.g. ultrasound referral fee), not per-unit
+      // Only count it once it's actually been paid out to the doctor
+      const doctorFee = item.doctorFeePaid ? (item.doctorFee || 0) : 0;
+      acc[pId].totalDoctorFee += doctorFee;
+
+      const itemProfit = (item.quantity * item.price) - itemCost - doctorFee;
       acc[pId].totalProfit += itemProfit;
       
       return acc;

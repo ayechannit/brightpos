@@ -51,24 +51,26 @@ export default function SaleProfitReport() {
       ["Sale Profit Report"],
       ["Period", `${dateRange.startDate} to ${dateRange.endDate}`],
       [""],
-      ["Product Name", "Category", "Barcode", "Total Qty Sold", "Avg Purchase Price (Ks)", "Total Revenue (Ks)", "Total Cost (Ks)", "Total Profit (Ks)"],
+      ["Product Name", "Category", "Barcode", "Total Qty Sold", "Avg Purchase Price (Ks)", "Total Revenue (Ks)", "Total Cost (Ks)", "Doctor Fee (Ks)", "Total Profit (Ks)"],
       ...data.map(p => [
-        p.name, 
-        p.category, 
-        p.barcode, 
-        p.totalSoldQty, 
-        p.avgPurchasePrice.toFixed(2), 
-        p.totalRevenue, 
-        p.totalCost.toFixed(2), 
+        p.name,
+        p.category,
+        p.barcode,
+        p.totalSoldQty,
+        p.avgPurchasePrice.toFixed(2),
+        p.totalRevenue,
+        p.totalCost.toFixed(2),
+        p.totalDoctorFee.toFixed(2),
         p.totalProfit.toFixed(2)
       ])
     ];
-    
+
     // Add totals row
     const totalRevenue = data.reduce((sum, item) => sum + item.totalRevenue, 0);
     const totalCost = data.reduce((sum, item) => sum + item.totalCost, 0);
+    const totalDoctorFee = data.reduce((sum, item) => sum + item.totalDoctorFee, 0);
     const totalProfit = data.reduce((sum, item) => sum + item.totalProfit, 0);
-    wsData.push(["", "", "", "Totals:", "", totalRevenue, totalCost.toFixed(2), totalProfit.toFixed(2)]);
+    wsData.push(["", "", "", "Totals:", "", totalRevenue, totalCost.toFixed(2), totalDoctorFee.toFixed(2), totalProfit.toFixed(2)]);
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     XLSX.utils.book_append_sheet(wb, ws, "Sale Profit");
@@ -119,6 +121,7 @@ export default function SaleProfitReport() {
                   <TableCell align="right">Avg Purchase Price</TableCell>
                   <TableCell align="right">Revenue</TableCell>
                   <TableCell align="right">Cost</TableCell>
+                  <TableCell align="right">Doctor Fee</TableCell>
                   <TableCell align="right">Profit</TableCell>
                 </TableRow>
               </TableHead>
@@ -132,6 +135,7 @@ export default function SaleProfitReport() {
                     <TableCell align="right">{p.avgPurchasePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks</TableCell>
                     <TableCell align="right">{p.totalRevenue.toLocaleString()} Ks</TableCell>
                     <TableCell align="right">{p.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks</TableCell>
+                    <TableCell align="right">{p.totalDoctorFee > 0 ? `${p.totalDoctorFee.toLocaleString()} Ks` : '-'}</TableCell>
                     <TableCell align="right" fontWeight="bold" color={p.totalProfit < 0 ? 'error.main' : 'success.main'}>
                       {p.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks
                     </TableCell>
@@ -146,6 +150,9 @@ export default function SaleProfitReport() {
                     <TableCell align="right" fontWeight="bold">
                       {data.reduce((sum, item) => sum + item.totalCost, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks
                     </TableCell>
+                    <TableCell align="right" fontWeight="bold">
+                      {data.reduce((sum, item) => sum + item.totalDoctorFee, 0).toLocaleString()} Ks
+                    </TableCell>
                     <TableCell align="right" fontWeight="bold" color="success.main">
                       {data.reduce((sum, item) => sum + item.totalProfit, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks
                     </TableCell>
@@ -153,7 +160,7 @@ export default function SaleProfitReport() {
                 )}
                 {data.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">No sale profit data found for this period.</TableCell>
+                    <TableCell colSpan={9} align="center">No sale profit data found for this period.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
